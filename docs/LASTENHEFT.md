@@ -126,6 +126,9 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-14 | Merkmale vererben: „wie Pos. 1, aber 2-flügelig“. Vorgabewerte für den ganzen Vorgang, z. B. Material und Farbe für alle. | M | 1 |
 | F-15 | Positionen kopieren, löschen, umsortieren. Raum bzw. Einbauort je Position. | M | 1 |
 | F-16 | Fotos und Skizzen je Position (Kamera am Handy, Zeichnung später) | S | 2 |
+| F-16a | **Foto des Aufmaßblatts einlesen:** Handschrift und Kurzschreibweise (z. B. „DK – –“, „Raff“, „+“) werden zu Positionen. Original-Foto steht beim Prüfen daneben, unsichere Werte sind markiert (siehe `docs/gespraeche/2026-11-25_aufmassblatt.md`) | M | 1–2 |
+| F-16b | Erfassungsmaske mit **den Feldern des Aufmaßblatts** in dessen Reihenfolge, Kopfangaben (System, Farbe, Alt-/Neubau, Montageart) gelten für alle Positionen | M | 1 |
+| F-16c | **Öffnung je Feld** bei mehrteiligen Elementen (li / Mi / re, z. B. fest + DK) | M | 1 |
 | F-17 | Erfassung **vor Ort ohne Netz**: Daten bleiben auf dem Gerät und werden später übertragen | S | 4 |
 | F-18 | **Zeichnung je Position automatisch** aus Maß, Teilung, Öffnung, Anschlag, Oberlicht/Seitenteil: Ansicht mit Öffnungssymbolen in üblicher Zeichenweise, ersetzt das Zeichnen von Hand | M | 1–2 |
 | F-19 | Zeichnung mit **Bemaßung** als PDF (je Position und als Gesamtliste), im Format, das der Lieferant braucht (Ansicht innen/außen siehe Z-10) | M | 2 |
@@ -322,6 +325,10 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 ---
 
 ## Anhang A – Vorschlag Merkmalkatalog (wird durch Z-3 ersetzt)
+
+> **Ergänzen laut Aufmaßblatt des Pilotkunden:** zweites Maßpaar (Fertigmaß), Öffnung je Feld, Kämpfer/Stulp, Dichtungsfarbe (schwarz/grau),
+> Griffoliven, Entwässerung (vorne/unten), Aufdoppelung je Seite in mm, Randverbund (Alu/Kunststoff), Fensterbank außen/innen,
+> Rollladenkasten- und Panzerfarbe, Gurtdurchlauf (Mauer/Deckel), Raffstore. Details: `docs/gespraeche/2026-11-25_aufmassblatt.md`.
 
 **Alle Elemente:** Position, Raum/Einbauort, Stückzahl, Breite × Höhe in mm, Maßart (Rohbau-/Lichtmaß
 oder Bestellmaß), Bemerkung, Fotos
