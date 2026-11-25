@@ -38,7 +38,7 @@ const I = {
   post: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   haendler: '<path d="M3 21V8l9-5 9 5v13"/><path d="M8 21v-7h8v7"/>',
   zahnrad: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
-  ki: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  ki: '',
   plus: '<path d="M12 5v14M5 12h14"/>',
   senden: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
   uhr: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
@@ -57,7 +57,7 @@ const I = {
   x: '<path d="M6 6l12 12M18 6L6 18"/>',
   anhang: '<path d="M21 12l-8.5 8.5a5 5 0 0 1-7-7L14 5a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 8"/>',
 };
-const ico = (n, k = '') => `<svg class="ico ${k}" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
+const ico = (n, k = '') => !I[n] ? '' : `<svg class="ico ${k}" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
 
 // ——— Aufgabenliste („Zu erledigen“) ———
 function aufgaben() {
@@ -123,8 +123,8 @@ function seiteUebersicht() {
         <li class="prio-${a.prio}">
           <span class="todo-ico">${ico(a.ico)}</span>
           <div class="todo-text">
-            <div class="todo-titel">${esc(a.titel)} ${a.v ? `<a class="chip" href="#/vorgang/${a.v.id}">${a.v.id} · ${esc(a.v.kunde)}</a>` : ''}</div>
-            <div class="leise">${esc(a.text)}</div>
+            <div class="todo-titel">${esc(a.titel)} </div>
+            <div class="leise">${esc(a.text)}</div>${a.v ? `<a class="todo-bezug" href="#/vorgang/${a.v.id}"><span class="nr">${a.v.id}</span> ${esc(a.v.kunde)}</a>` : ''}
           </div>
           <div class="todo-akt">
             ${a.href ? `<a class="knopf klein" href="${a.href}">${a.knopf}</a>` : `<button class="knopf klein" data-act="${a.act}" data-arg="${a.arg}">${a.knopf}</button>`}
@@ -173,7 +173,7 @@ function seiteVorgaenge() {
   ${liste.map((v) => `
     <a class="vzeile karte" href="#/vorgang/${v.id}">
       <div class="v-haupt">
-        <div class="v-titel"><b>${esc(v.kunde)}</b> <span class="leise">${v.id}</span></div>
+        <div class="v-titel"><b>${esc(v.kunde)}</b> <span class="nr">${v.id}</span></div>
         <div class="leise">${esc(v.art)} · ${esc(v.adresse)}</div>
       </div>
       <div class="v-pos">${ico('fenster')} ${v.positionen.length} Pos. / ${v.positionen.reduce((s, p) => s + (+p.stk || 0), 0)} Elemente</div>
@@ -183,22 +183,72 @@ function seiteVorgaenge() {
   </div>`;
 }
 
+// Ansicht von innen mit Öffnungssymbolen nach üblicher Zeichenweise (Spitze zeigt zur Bandseite)
+function ansicht(p, max = 92) {
+  const b = +p.b || 1000, h = +p.h || 1000;
+  const f = max / Math.max(b, h);
+  let W = Math.max(30, b * f), Hh = Math.max(30, h * f);
+  const L = []; const r = (x, y, w, hh, k = '') => L.push(`<rect x="${x}" y="${y}" width="${w}" height="${hh}" class="${k}"/>`);
+  const l = (pts, k = '') => L.push(`<polyline points="${pts.map((q) => q.join(',')).join(' ')}" class="${k}"/>`);
+  const o = 3; r(o, o, W, Hh, 'rahmen');
+  let top = o; let hoch = Hh;
+  if (p.teilung === 'mit Oberlicht') { r(o + 3, o + 3, W - 6, Hh * 0.22, 'fluegel'); top = o + Hh * 0.22 + 3; hoch = Hh - Hh * 0.22 - 3; }
+  let felder = 1;
+  if (/^2-/.test(p.teilung) || p.art === 'Hebe-Schiebe-Tür') felder = 2;
+  if (/^3-/.test(p.teilung)) felder = 3;
+  const seite = p.teilung === 'mit Seitenteil';
+  const breiten = seite ? [W * 0.7, W * 0.3] : Array(felder).fill(W / felder);
+  let x = o;
+  breiten.forEach((bw, i) => {
+    const fx = x + 3, fy = top + 3, fw = bw - 6, fh = hoch - 6;
+    r(fx, fy, fw, fh, 'fluegel');
+    let oe = p.oeffnung; let band = p.anschlag === 'DIN rechts' ? 'r' : 'l';
+    if (seite && i === 1) oe = 'Fest';
+    if (felder > 1 && p.art !== 'Hebe-Schiebe-Tür') band = i === 0 ? 'l' : i === felder - 1 ? 'r' : band;
+    if (oe === 'Stulp (Dreh-Kipp/Dreh)') oe = (i === 0) === (p.anschlag !== 'DIN links') ? 'Dreh' : 'Dreh-Kipp';
+    if (p.art === 'Hebe-Schiebe-Tür') {
+      const schiebt = (i === 1) === (p.anschlag !== 'DIN rechts');
+      if (schiebt) { const y = fy + fh * 0.55; const a = i === 1 ? -1 : 1; const x0 = fx + fw / 2 + a * fw * 0.25; const x1 = fx + fw / 2 - a * fw * 0.25; l([[x0, y], [x1, y]], 'sym'); l([[x1 + a * 5, y - 4], [x1, y], [x1 + a * 5, y + 4]], 'sym'); }
+      else L.push(`<text x="${fx + fw / 2}" y="${fy + fh / 2 + 4}" class="fest">F</text>`);
+    } else if (oe === 'Fest') L.push(`<text x="${fx + fw / 2}" y="${fy + fh / 2 + 4}" class="fest">F</text>`);
+    else {
+      if (/Dreh|nach (innen|außen)/.test(oe)) l(band === 'l' ? [[fx + fw, fy], [fx, fy + fh / 2], [fx + fw, fy + fh]] : [[fx, fy], [fx + fw, fy + fh / 2], [fx, fy + fh]], 'sym');
+      if (/Kipp/.test(oe)) l([[fx, fy], [fx + fw / 2, fy + fh], [fx + fw, fy]], 'sym kipp');
+    }
+    x += bw;
+  });
+  return `<svg class="ansicht" viewBox="0 0 ${W + 6} ${Hh + 6}" width="${W + 6}" height="${Hh + 6}" role="img" aria-label="Ansicht ${esc(p.art)} ${esc(p.oeffnung || '')}">${L.join('')}</svg>`;
+}
+
 function positionKarte(v, p, bearbeitbar = true) {
   const fehlt = fehlend(p); const warn = plausibel(p);
-  const chip = (k) => p[k] ? `<span class="merkmal" title="${FELDER[k]}"><small>${FELDER[k]}</small>${esc(p[k])}</span>` : '';
+  const zeile = (t, w) => w ? `<dt>${t}</dt><dd>${esc(w)}</dd>` : '';
+  const oeff = [p.oeffnung, p.anschlag].filter(Boolean).join(', ');
+  const extra = [p.glasOpt, p.rollladen !== 'keiner' && p.rollladen ? 'Rollladen ' + p.rollladen : '', p.beschlag !== 'Standard' ? p.beschlag : '', p.sprossen !== 'keine' && p.sprossen ? 'Sprossen ' + p.sprossen : ''].filter(Boolean).join(' · ');
   return `
   <article class="pos ${fehlt.length ? 'pos-fehlt' : ''}">
     <header>
-      <div><span class="posnr">Pos. ${p.nr}</span> <b>${esc(p.raum || '–')}</b> <span class="leise">· ${p.stk} × ${esc(p.art)}</span></div>
+      <span class="posnr">${String(p.nr).padStart(2, '0')}</span>
+      <div class="pos-titel"><b>${esc(p.raum || '–')}</b><span>${p.stk} × ${esc(p.art)}</span></div>
       ${bearbeitbar ? `<button class="knopf klein geist nur-ico" data-act="posBearbeiten" data-arg="${v.id}|${p.nr}" title="Bearbeiten" aria-label="Pos. ${p.nr} bearbeiten">${ico('stift')}</button>` : ''}
     </header>
-    <div class="pos-mass">${p.b || '?'} × ${p.h || '?'} <small>mm · ${esc(p.masstyp || 'Maßart?')}</small></div>
-    <div class="merkmale">
-      ${['material', 'teilung', 'oeffnung', 'anschlag', 'glas', 'glasOpt', 'farbeInnen', 'farbeAussen', 'rollladen', 'beschlag', 'sprossen'].filter((k) => !['keiner', 'keine', 'Standard'].includes(p[k])).map(chip).join('')}
-      ${fehlt.map((k) => `<span class="merkmal fehlt"><small>${FELDER[k]}</small>fehlt</span>`).join('')}
+    <div class="pos-koerper">
+      <figure>${ansicht(p)}</figure>
+      <div>
+        <div class="pos-mass">${p.b || '–'} × ${p.h || '–'}</div>
+        <div class="pos-masstyp">mm · ${esc(p.masstyp || 'Maßart offen')}</div>
+      </div>
     </div>
-    ${p.bemerkung ? `<p class="leise klein">${esc(p.bemerkung)}</p>` : ''}
-    ${warn.map((w) => `<p class="hinweis gelb">${ico('warn')} ${esc(w)}</p>`).join('')}
+        <dl class="werte">
+          ${zeile('Material', [p.material, p.teilung !== '1-flügelig' ? p.teilung : ''].filter(Boolean).join(', '))}
+          ${zeile('Öffnung', oeff)}
+          ${zeile('Glas', p.glas)}
+          ${zeile('Farbe', p.farbeInnen || p.farbeAussen ? `innen ${p.farbeInnen || '?'} · außen ${p.farbeAussen || '?'}` : '')}
+        </dl>
+    ${extra ? `<p class="pos-extra">${esc(extra)}</p>` : ''}
+    ${p.bemerkung ? `<p class="pos-extra leise">${esc(p.bemerkung)}</p>` : ''}
+    ${fehlt.length ? `<p class="pos-hinweis rot">Fehlt: ${fehlt.map((k) => FELDER[k]).join(', ')}</p>` : ''}
+    ${warn.map((w) => `<p class="pos-hinweis gelb">${esc(w)}</p>`).join('')}
   </article>`;
 }
 
@@ -215,11 +265,11 @@ function seiteVorgang(id, tab = 'positionen') {
   return `
   <nav class="krumen"><a href="#/vorgaenge">Vorgänge</a> › <span>${v.id}</span></nav>
   <div class="kopf"><div><h1>${esc(v.kunde)} <span class="leise">· ${esc(v.art)}</span></h1>
-  <p class="leise">${v.id} · ${esc(v.adresse)} · ${esc(v.tel)} · ${esc(v.email)}</p></div>
+  <p class="leise"><span class="nr">${v.id}</span> · ${esc(v.adresse)} · ${esc(v.tel)} · ${esc(v.email)}</p></div>
   <div class="knopfreihe">${badge(v.status)} ${avatar(N(v.nutzer))}</div></div>
   <ol class="ablauf">${ABLAUF.map((s, i) => `<li class="${i < schritt ? 'fertig' : i === schritt ? 'jetzt' : ''}">${i === schritt && v.status === 'rueckfrage' ? 'Rückfrage' : STATUS[s].text.replace(' prüfen', '').replace(' in Arbeit', '')}</li>`).join('')}</ol>
   <section class="karte ki-box">
-    <div class="zeile-zw"><h2>${ico('ki')} Zusammenfassung</h2>
+    <div class="zeile-zw"><h2>Stand des Vorgangs</h2>
     <button class="knopf klein" data-act="zusammenfassen" data-arg="${id}">${zf ? 'Neu erstellen' : 'Zusammenfassen'}</button></div>
     <div id="zf">${zf ? `<ul>${zf.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : `<p class="leise">${esc(v.notiz)}</p>`}</div>
   </section>
@@ -438,7 +488,7 @@ function mailDetail(m) {
     <p class="leise">${m.richtung === 'ein' ? 'Von ' + esc(absender(m)) : 'An ' + esc(m.an === 'kunde' ? v?.kunde : H(m.an)?.kurz)} · ${datum(m.datum)}</p>
     ${m.anhang ? `<p><span class="anhang">${ico('anhang')} ${esc(m.anhang)}</span></p>` : ''}
     ${m.ki ? `<div class="ki-box karte">
-      <div class="ki-titel">${ico('ki')} KI-Einordnung</div>
+      <div class="ki-titel">Automatisch eingeordnet</div>
       <p><span class="kat kat-${katKlasse(m.kategorie)}">${m.kategorie}</span> ${v ? `zugeordnet zu <a href="#/vorgang/${v.id}">${v.id} · ${esc(v.kunde)}</a>` : 'keinem Vorgang zugeordnet'}</p>
       <p>${esc(m.ki)}</p>
       <div class="knopfreihe">${akt}</div>
@@ -473,7 +523,7 @@ function seiteErfassen(vid) {
     </section>
     <section class="karte" id="erf-ergebnis">
       <h2>2. Vorschlag prüfen</h2>
-      ${e?.ergebnis ? erfErgebnis(e.ergebnis, vid) : `<div class="leer">${ico('ki')}<p class="leise">Hier erscheint die Positionsliste.</p></div>`}
+      ${e?.ergebnis ? erfErgebnis(e.ergebnis, vid) : `<div class="leer"><p class="leise">Hier erscheint die Positionsliste.</p></div>`}
     </section>
   </div>`;
 }
@@ -489,7 +539,7 @@ function erfErgebnis(r, vid) {
   <p class="${offen ? 'hinweis rot' : 'hinweis gruen'}">${ico(offen ? 'warn' : 'haken')} ${r.positionen.length} Positionen erkannt${offen ? ` · ${offen} mit fehlenden Pflichtangaben (rot). Diese können Sie nach dem Übernehmen ergänzen.` : ' · alle Pflichtangaben vorhanden.'}</p>
   <div class="erf-liste">${r.positionen.map((p) => `
     <article class="pos erf">
-      <header><div><span class="posnr">Pos. ${p.nr}</span> <b>${esc(p.art)}</b></div></header>
+      <header><span class="posnr">${String(p.nr).padStart(2, '0')}</span><div class="pos-titel"><b>${esc(p.raum || '–')}</b><span>${p.stk} × ${esc(p.art)}</span></div>${ansicht(p, 56)}</header>
       <div class="erf-felder">${felder.filter((k) => p[k] || quelle(p, k) === 'fehlt').map((k) => `<span class="ef q-${quelle(p, k) || 'gesagt'}" title="${esc(titel(p, k))}"><small>${FELDER[k]}</small>${p[k] ? esc(p[k]) + (k === 'b' || k === 'h' ? ' mm' : '') : '—'}</span>`).join('')}</div>
       ${plausibel(p).map((w) => `<p class="hinweis gelb">${ico('warn')} ${esc(w)}</p>`).join('')}
     </article>`).join('')}</div>
@@ -558,7 +608,7 @@ function mailVorschau(an, betreff, text, anhang) {
     <div class="mv-kopf"><span>An</span><b>${esc(an)}</b><span>Betreff</span><input value="${esc(betreff)}" id="mv-betreff"></div>
     ${anhang ? `<div class="mv-anhang">${ico('anhang')} ${esc(anhang)}</div>` : ''}
     <textarea id="mv-text" rows="12">${esc(text)}</textarea>
-    <p class="leise klein">${ico('ki')} Entwurf der KI – bitte prüfen. Gesendet wird erst mit Ihrem Klick.</p>
+    <p class="leise klein">Vorschlag – bitte prüfen. Gesendet wird erst mit Ihrem Klick.</p>
   </div>`;
 }
 
@@ -677,7 +727,7 @@ const AKT = {
   drucken() { window.print(); },
 
   async zusammenfassen(id) {
-    const box = $('#zf'); box.innerHTML = '<p class="denkt">KI fasst zusammen<span>.</span><span>.</span><span>.</span></p>';
+    const box = $('#zf'); box.innerHTML = '<p class="denkt">Wird zusammengefasst<span>.</span><span>.</span><span>.</span></p>';
     await warte(900);
     ui.zf[id] = zusammenfassung(V(id), d); render();
   },
@@ -687,7 +737,7 @@ const AKT = {
     const m = d.mails.find((x) => x.vorgang === v.id && x.von === h.id && x.kategorie === 'Rückfrage');
     modal(`Rückfrage beantworten · ${esc(h.kurz)}`, `
       <div class="rf-raster"><div><p class="leise klein">Rückfrage vom ${datum(m?.datum)}</p><pre class="mailtext klein">${esc(m?.text || '')}</pre>
-      <p class="hinweis blau">${ico('ki')} Die KI hat den Antwortentwurf vorbereitet. Bei Pos. 4 schlägt sie DIN rechts vor – <b>bitte mit dem Kunden abstimmen</b>. Die Position wird nach dem Senden angepasst.</p></div>
+      <p class="hinweis blau">${ico('ki')} Antwort ist vorbereitet. Bei Pos. 4 schlägt sie DIN rechts vor – <b>bitte mit dem Kunden abstimmen</b>. Die Position wird nach dem Senden angepasst.</p></div>
       ${mailVorschau(`${h.name} <${h.email}>`, 'AW: ' + (m?.betreff || ''), rueckfrageText(v, h, ich, FIRMA), `Positionsliste_${v.id}_korrigiert.pdf`)}</div>`,
     [{ text: 'Abbrechen', act: 'schliessen', art: 'geist' }, { text: ico('senden') + ' Antwort senden', act: 'rueckfrageSenden', arg: aid, art: 'primaer' }], true);
   },
@@ -824,7 +874,7 @@ const AKT = {
   async auswerten(vid) {
     const text = $('#erf-text').value.trim();
     if (!text) { toast('Bitte zuerst etwas einsprechen oder eintippen.'); return; }
-    $('#erf-ergebnis').innerHTML = '<h2>2. Vorschlag prüfen</h2><p class="denkt">KI liest die Notiz<span>.</span><span>.</span><span>.</span></p>';
+    $('#erf-ergebnis').innerHTML = '<h2>2. Vorschlag prüfen</h2><p class="denkt">Notiz wird ausgewertet<span>.</span><span>.</span><span>.</span></p>';
     await warte(1100);
     ui.erfassung = { text, ergebnis: auswerten(text) };
     $('#erf-ergebnis').innerHTML = '<h2>2. Vorschlag prüfen</h2>' + erfErgebnis(ui.erfassung.ergebnis, vid);
