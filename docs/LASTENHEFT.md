@@ -1,6 +1,6 @@
 # Lastenheft – Angebots-Dashboard Fenster & Türen
 
-Stand: 25.11.2026 · Version 0.3 (Produkt mit Pilotkunde, siehe `docs/gespraeche/2026-11-25_kunde.md` und `docs/analyse/pinncalc-abloesung.md`) · Arbeitstitel: **Stahl Dashboard**
+Stand: 25.11.2026 · Version 0.3 (öffentliche Fassung ohne Kundendaten) · Arbeitstitel: **Angebots-Cockpit**
 
 ---
 
@@ -10,7 +10,7 @@ Der Auftraggeber ist ein Fensterbauer mit eigener Montage. Mit vier Personen nim
 die Wünsche zu Fenstern und Türen auf, z. B. 3-fach-Verglasung, Holz-Alu, innen Kiefer-Optik.
 Dafür holt er Angebote bei Großhändlern und Herstellern ein und macht daraus ein Angebot an den Endkunden.
 
-Der Betrieb arbeitet mit der Branchensoftware **corpora pinncalc** (Schreibweise noch prüfen). Darin laufen Kunden,
+Der Betrieb arbeitet mit einer allgemeinen **Branchensoftware (ERP)**. Darin laufen Kunden,
 Zeiterfassung (Mitarbeiter am Handy), Kalkulation mit jährlich gepflegter Preisliste, Nachkalkulation sowie die Schnittstellen
 zu DATEV, Einkauf und Buchhaltung.
 
@@ -41,8 +41,8 @@ fertig vorbereiteten Angebot an den Endkunden:
 
 **Leitsatz:** Die KI schreibt nur Entwürfe. Verschickt wird ausschließlich per Klick eines Menschen.
 
-**Rolle neben pinncalc:** Das Tool ersetzt pinncalc nicht, sondern ist ein **Fenster-Modul** davor. Es nimmt das Zeichnen, die Fensterliste
-und das Abtippen der Lieferantenangebote ab und übergibt die Ergebnisse an pinncalc.
+**Rolle neben dem ERP:** Das Tool ersetzt das vorhandene ERP zunächst nicht, sondern ist ein **Fenster-Modul** davor. Es nimmt das Zeichnen, die Fensterliste
+und das Abtippen der Lieferantenangebote ab und übergibt die Ergebnisse an das ERP.
 
 **Kundenangebote** sehen immer gleich aus: fester Kopf und Schluss, unten eine transparente Aufstellung, was jede Position kostet.
 Ziel ist ein faires, nachvollziehbares Angebot für den Endkunden.
@@ -51,8 +51,8 @@ Ziel ist ein faires, nachvollziehbares Angebot für den Endkunden.
 
 | Punkt | Festlegung |
 |---|---|
-| Art | **Allgemeines Produkt für Fensterbauer** (Fachbetriebe, die beim Großhändler kaufen und montieren). Geplant mit diesem Betrieb als **Pilotkunde**. Betriebsabhängiges ist Einstellung, nicht Code. Mandantenfähig von Anfang an. |
-| Langfristiges Ziel | **Corpora (PinnCalc) schrittweise ablösen**, siehe Fahrplan in `docs/analyse/pinncalc-abloesung.md`. Kosten heute beim Pilotkunden: 6.200 €/Jahr. |
+| Art | **Allgemeines Produkt für Fensterbauer** (Fachbetriebe, die beim Großhändler kaufen und montieren). Geplant mit einem **Pilotkunden**. Betriebsabhängiges ist Einstellung, nicht Code. Mandantenfähig von Anfang an. |
+| Langfristiges Ziel | Das vorhandene ERP **schrittweise ablösen** (Fenster-Modul → Zeiterfassung und Nachkalkulation → Belege, Rechnung, DATEV). |
 | Nutzer | Pilotkunde: 4 Personen im Büro plus Monteure (Zeiterfassung, Phase 2). In Stufe 1 haben alle die gleichen Rechte, und es ist sichtbar, wer was gemacht hat. |
 | Eigenständigkeit | Eigenes Repository, eigene Datenbank, eigene Schlüssel, eigene Domain, eigenes Postfach. **Keine technische oder organisatorische Verbindung zu anderen Projekten.** |
 | Daten in der Entwicklung | Nur erfundene Daten (Endkunden, Händler, Preise) |
@@ -60,13 +60,13 @@ Ziel ist ein faires, nachvollziehbares Angebot für den Endkunden.
 
 **Nicht im Umfang**, kann später kommen:
 
-- **Alles, was pinncalc heute schon kann:** Kundenstamm, Zeiterfassung, Kalkulation mit Preisliste, Nachkalkulation, DATEV,
+- **Alles, was das vorhandene ERP heute schon kann:** Kundenstamm, Zeiterfassung, Kalkulation mit Preisliste, Nachkalkulation, DATEV,
   Einkauf, Buchhaltung. Diese Daten werden höchstens übernommen, nicht neu gepflegt.
 - Kalkulation aus Herstellerpreislisten oder Konfiguratoren
 - Bestellung direkt in Händlerportalen
 - Rechnungen, Buchhaltung, Zahlungsverfolgung
 - Montage- und Personalplanung
-- Ersatz von pinncalc. Die **Schnittstelle** zu pinncalc gehört dagegen zum Umfang (Abschnitt 6.12).
+- Sofortiger Ersatz des ERP. Die **Schnittstelle** zum ERP gehört dagegen zum Umfang (Abschnitt 6.12).
 
 ## 4. Begriffe
 
@@ -126,7 +126,7 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-14 | Merkmale vererben: „wie Pos. 1, aber 2-flügelig“. Vorgabewerte für den ganzen Vorgang, z. B. Material und Farbe für alle. | M | 1 |
 | F-15 | Positionen kopieren, löschen, umsortieren. Raum bzw. Einbauort je Position. | M | 1 |
 | F-16 | Fotos und Skizzen je Position (Kamera am Handy, Zeichnung später) | S | 2 |
-| F-16a | **Foto des Aufmaßblatts einlesen:** Handschrift und Kurzschreibweise (z. B. „DK – –“, „Raff“, „+“) werden zu Positionen. Original-Foto steht beim Prüfen daneben, unsichere Werte sind markiert (siehe `docs/gespraeche/2026-11-25_aufmassblatt.md`) | M | 1–2 |
+| F-16a | **Foto des Aufmaßblatts einlesen:** Handschrift und Kurzschreibweise (z. B. „DK – –“, „Raff“, „+“) werden zu Positionen. Original-Foto steht beim Prüfen daneben, unsichere Werte sind markiert | M | 1–2 |
 | F-16b | Erfassungsmaske mit **den Feldern des Aufmaßblatts** in dessen Reihenfolge, Kopfangaben (System, Farbe, Alt-/Neubau, Montageart) gelten für alle Positionen | M | 1 |
 | F-16c | **Öffnung je Feld** bei mehrteiligen Elementen (li / Mi / re, z. B. fest + DK) | M | 1 |
 | F-17 | Erfassung **vor Ort ohne Netz**: Daten bleiben auf dem Gerät und werden später übertragen | S | 4 |
@@ -138,7 +138,7 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | Nr. | Anforderung | Prio | Stufe |
 |---|---|---|---|
 | F-20 | Pflegbarer Katalog für Elementarten (Fenster, Balkon-/Terrassentür, Hebe-Schiebe-Tür, Haustür, Nebentür …) mit ihren Merkmalen und erlaubten Werten | M | 1 |
-| F-20a | **Weitere Produktgruppen** des Betriebs als Elementarten mit eigenen Merkmalen: Rollläden, Raffstore/Jalousien, Markisen, Insektenschutz, Lamellendächer, Terrassendächer, Wintergärten, Glas (siehe `docs/gespraeche/2026-11-25_website.md`) | S | 2 |
+| F-20a | **Weitere Produktgruppen** des Betriebs als Elementarten mit eigenen Merkmalen: Rollläden, Raffstore/Jalousien, Markisen, Insektenschutz, Lamellendächer, Terrassendächer, Wintergärten, Glas  | S | 2 |
 | F-20b | **Eigenfertigung** (eigene Schlosserei, Sonderkonstruktionen): Position wahlweise „beim Händler anfragen“ oder „selbst fertigen“ (Material + Stunden) | S | 2–3 |
 | F-21 | In Stufe 1 gilt ein **Vorschlagskatalog** (Anhang A). Er wird durch die Liste des Auftraggebers ersetzt, sobald sie vorliegt. | M | 1 → 4 |
 | F-22 | Pflichtmerkmale je Elementart. Ohne Pflichtmerkmale ist keine Anfrage möglich. | M | 1 |
@@ -224,13 +224,13 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-103 | **Gestaltung je Betrieb:** Logo und Firmenfarben in App, Mails und Kundenangebot | S | 1 |
 | F-102 | Rollen (z. B. Außendienst ohne Einkaufspreise) | K | 4 |
 
-### 6.12 Schnittstelle zu pinncalc
+### 6.12 Schnittstelle zum vorhandenen ERP
 
 | Nr. | Anforderung | Prio | Stufe |
 |---|---|---|---|
-| F-110 | **Übergabe an pinncalc:** Positionen mit Beschreibung, Maßen, Stückzahl und Einkaufspreis aus dem bestätigten Händlerangebot, damit dort nichts abgetippt werden muss | M | 3 |
-| F-111 | **Übernahme aus pinncalc:** Kunde/Bauvorhaben und, falls gewünscht, Preise für Montage und Zubehör aus der Preisliste, damit nichts doppelt gepflegt wird | S | 3 |
-| F-112 | Format und Weg der Schnittstelle nach dem, was pinncalc anbietet (z. B. GAEB, Datanorm, CSV/Excel-Import, eigene Schnittstelle). Wird mit dem Hersteller geklärt (Z-9). Bis dahin Export als CSV/Excel. | M | 3 |
+| F-110 | **Übergabe an das ERP:** Positionen mit Beschreibung, Maßen, Stückzahl und Einkaufspreis aus dem bestätigten Händlerangebot, damit dort nichts abgetippt werden muss | M | 3 |
+| F-111 | **Übernahme aus dem ERP:** Kunde/Bauvorhaben und, falls gewünscht, Preise für Montage und Zubehör aus der Preisliste, damit nichts doppelt gepflegt wird | S | 3 |
+| F-112 | Format und Weg der Schnittstelle nach dem, was das ERP anbietet (z. B. GAEB, Datanorm, CSV/Excel-Import, eigene Schnittstelle). Wird mit dem Hersteller geklärt (Z-9). Bis dahin Export als CSV/Excel. | M | 3 |
 
 ## 7. Nicht-funktionale Anforderungen
 
@@ -286,15 +286,15 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | Z-2 | 2–3 frühere Anfragen und 2–3 Händlerangebote je Händler (anonymisiert) | Stufe 2/4 |
 | Z-3 | Sein Merkmalkatalog (Systeme, Dekore, Gläser, Optionen) | Stufe 4 (vorher Anhang A) |
 | Z-4 | Welcher E-Mail-Anbieter (GMX, IONOS, Strato, T-Online, Gmail, Outlook/Microsoft 365?) | Stufe 2 |
-| Z-5 | ~~Nutzt er Branchensoftware?~~ **Ja: corpora pinncalc** (25.11.2026) | erledigt |
+| Z-5 | ~~Nutzt er Branchensoftware?~~ Ja, ein allgemeines ERP | erledigt |
 | Z-6 | Briefkopf, Logo, Angebotstexte, Zahlungsbedingungen, übliche Aufschläge und Montagepauschalen | Stufe 3 |
 | Z-7 | Namen und E-Mail-Adressen der 4 Nutzer | Stufe 4 |
 | Z-8 | Nutzen Händler Portale statt Mail-Anfragen? | Stufe 2 |
-| Z-9 | pinncalc: genaue Bezeichnung, Hersteller, Version, lokal oder Cloud, verfügbare Import-/Exportwege (Kontakt zum Hersteller) | vor Stufe 3 |
+| Z-9 | ERP: Version, lokal oder Cloud, verfügbare Import-/Exportwege (Kontakt zum Hersteller) | vor Stufe 3 |
 | Z-10 | 1–2 heutige Fensterzeichnungen und Fensterlisten (anonymisiert): Was braucht der Lieferant genau? | Stufe 2 |
 | Z-11 | Muster-Kundenangebot mit festem Kopf und Schluss sowie gewünschter Aufschlüsselung je Position | Stufe 3 |
 | Z-12 | Vollständiger Satz „Die Schnittstelle soll sein …“ aus dem Gespräch | sofort |
-| Z-13 | Corpora-Paket, Exportmöglichkeiten, Venturi ja/nein (beim Kunden bzw. PinnCalc erfragen) | vor Phase 3 |
+| Z-13 | ERP: Paket, Exportmöglichkeiten, vorhandene CAD-Module | vor Phase 3 |
 | Z-14 | Wie die Nachkalkulation heute von Hand läuft (Beispiel mit erfundenen Zahlen: welche Zahlen, welche Tabelle) | vor Phase 2 |
 
 ## 12. Risiken
@@ -306,8 +306,8 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | Händler-Wording und -Formate unbekannt | Anfragen wirken fremd oder unvollständig | Neutrale Standardvorlage, je Händler anpassbar, sobald Muster da sind (Z-2) |
 | Postfach ist Outlook/Microsoft 365 | Anbindung aufwendiger (Microsoft-Login) | Früh klären (Z-4), Ersatzweg Mail-Programm (F-45) |
 | Händler arbeiten über Portale | Mail-Anfrage nicht möglich | Früh klären (Z-8), dann Export zum Abtippen/Hochladen |
-| pinncalc bietet keinen passenden Import | Daten müssen doch abgetippt werden | Früh beim Hersteller klären (Z-9). Ausweichweg: CSV/Excel, das pinncalc einlesen kann |
-| Doppelte Pflege von Kunden und Preisen | Fehler, Mehrarbeit | pinncalc bleibt führend, das Tool übernimmt nur (F-111) |
+| Das ERP bietet keinen passenden Import | Daten müssen doch abgetippt werden | Früh beim Hersteller klären (Z-9). Ausweichweg: CSV/Excel, das das ERP einlesen kann |
+| Doppelte Pflege von Kunden und Preisen | Fehler, Mehrarbeit | Das ERP bleibt führend, das Tool übernimmt nur (F-111) |
 | Automatische Zeichnung reicht dem Lieferanten nicht | Lieferant fragt nach | Abgleich mit echten Zeichnungen (Z-10), Bemaßung als PDF (F-19) |
 | Endkundendaten (personenbezogen) | DSGVO-Pflichten | Nur erfundene Daten bis Stufe 4, AVV mit allen Dienstleistern, Daten in der EU |
 | Manipulierte eingehende Mails | KI tut Ungewolltes | KI liest Mails nur als Information, nichts passiert ohne Klick (F-55) |
@@ -321,17 +321,16 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | E-2 | Hosting | Cloudflare Pages (Vorschau je Branch) |
 | E-3 | KI schon im Pre-Dashboard (Stufe 1) | Ja: Diktat → Positionen ist der Kern und überzeugt beim Vorführen |
 | E-4 | Name der App gegenüber dem Auftraggeber | Arbeitstitel bis zur Abstimmung |
-| E-5 | Wo entsteht das Kundenangebot: in pinncalc (das Tool liefert Positionen und Preise zu) oder im Tool (mit Übergabe an pinncalc für Auftrag und Buchhaltung)? | Abhängig von Z-9. Wenn pinncalc gut importieren kann, das Angebot in pinncalc lassen (eine Wahrheit für Kalkulation und Nachkalkulation) |
-| E-6 | Rechte an der Software und Pilotvertrag | Rechte bleiben bei Tommy, Pilotkunde erhält Lizenz zum Pilotpreis; Stufen mit Abnahme, Haftungsgrenze, AVV (Details in der Analyse, Abschnitt 6) |
-| E-7 | Phase 2: Zeiterfassung + automatische Nachkalkulation vorziehen? | Ja, direkt nach dem Fenster-Modul: Nachkalkulation läuft heute von Hand, großer Nutzen, läuft neben Corpora |
+| E-5 | Wo entsteht das Kundenangebot: im ERP (das Tool liefert Positionen und Preise zu) oder im Tool (mit Übergabe an das ERP für Auftrag und Buchhaltung)? | Abhängig von Z-9. Wenn das ERP gut importieren kann, das Angebot dort lassen (eine Wahrheit für Kalkulation und Nachkalkulation) |
+| E-7 | Phase 2: Zeiterfassung + automatische Nachkalkulation vorziehen? | Ja, direkt nach dem Fenster-Modul: Nachkalkulation läuft heute von Hand, großer Nutzen, läuft neben das ERP |
 
 ---
 
 ## Anhang A – Vorschlag Merkmalkatalog (wird durch Z-3 ersetzt)
 
-> **Ergänzen laut Aufmaßblatt des Pilotkunden:** zweites Maßpaar (Fertigmaß), Öffnung je Feld, Kämpfer/Stulp, Dichtungsfarbe (schwarz/grau),
+> **Ergänzen laut Aufmaßblatt (typischer Aufbau):** zweites Maßpaar (Fertigmaß), Öffnung je Feld, Kämpfer/Stulp, Dichtungsfarbe (schwarz/grau),
 > Griffoliven, Entwässerung (vorne/unten), Aufdoppelung je Seite in mm, Randverbund (Alu/Kunststoff), Fensterbank außen/innen,
-> Rollladenkasten- und Panzerfarbe, Gurtdurchlauf (Mauer/Deckel), Raffstore. Details: `docs/gespraeche/2026-11-25_aufmassblatt.md`.
+> Rollladenkasten- und Panzerfarbe, Gurtdurchlauf (Mauer/Deckel), Raffstore.
 
 **Alle Elemente:** Position, Raum/Einbauort, Stückzahl, Breite × Höhe in mm, Maßart (Rohbau-/Lichtmaß
 oder Bestellmaß), Bemerkung, Fotos
