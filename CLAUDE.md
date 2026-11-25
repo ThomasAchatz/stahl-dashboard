@@ -12,8 +12,8 @@ Sprache in Code, Oberfläche, Doku und Commits: Deutsch. Antworten an Tommy kurz
 - Betriebsabhängiges (Katalog, Händler-Wording, Angebotsbausteine, Preislisten, Sätze) als Einstellung, nicht im Code. Datenmodell mandantenfähig planen.
 
 ## Stand
-- `docs/LASTENHEFT.md`: Anforderungen (v0.2). `docs/gespraeche/`: Gesprächsnotizen mit dem Kunden, jeweils mit Einordnung und offenen Fragen.
+- `docs/LASTENHEFT.md`: Anforderungen (v0.3). `docs/gespraeche/`: Gesprächsnotizen mit dem Kunden, jeweils mit Einordnung und offenen Fragen.
 - Prototyp (nur Vorschau, KI simuliert): `js/daten.js` (Demo-Daten, Katalog), `js/ki.js` (Diktat → Positionen, Mail-Texte je Händler),
   `js/app.js` (Seiten, Dialoge; `ansicht(p)` zeichnet die Fensteransicht aus den Positionsdaten), `css/app.css`.
-- Der Kunde nutzt **corpora pinncalc** (Kalkulation, Zeiten, DATEV usw.). Das Tool ersetzt es nicht, sondern übernimmt Zeichnung,
-  Fensterliste, Lieferantenangebot und übergibt an pinncalc.
+- Der Pilotkunde nutzt **PinnCalc Corpora** (6.200 €/Jahr; Kalkulation, Zeiten, DATEV usw.). Erst läuft das Tool daneben (Phase 1 Fenster-Modul,
+  Phase 2 Zeiterfassung + Nachkalkulation) und übergibt an Corpora; Rechnungen/DATEV wechseln erst in Phase 3.
