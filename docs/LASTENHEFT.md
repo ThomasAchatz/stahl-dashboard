@@ -1,6 +1,6 @@
 # Lastenheft – Angebots-Dashboard Fenster & Türen
 
-Stand: 25.11.2026 · Version 0.1 (Entwurf zur Freigabe) · Arbeitstitel: **Stahl Dashboard**
+Stand: 25.11.2026 · Version 0.2 (nach Kundengespräch, siehe `docs/gespraeche/2026-11-25_kunde.md`) · Arbeitstitel: **Stahl Dashboard**
 
 ---
 
@@ -10,8 +10,13 @@ Der Auftraggeber ist ein Fensterbauer mit eigener Montage. Mit vier Personen nim
 die Wünsche zu Fenstern und Türen auf, z. B. 3-fach-Verglasung, Holz-Alu, innen Kiefer-Optik.
 Dafür holt er Angebote bei Großhändlern und Herstellern ein und macht daraus ein Angebot an den Endkunden.
 
-Heute läuft das über Notizen, einzeln geschriebene E-Mails und das eigene Gedächtnis. Dabei passiert
-Folgendes:
+Der Betrieb arbeitet mit der Branchensoftware **corpora pinncalc** (Schreibweise noch prüfen). Darin laufen Kunden,
+Zeiterfassung (Mitarbeiter am Handy), Kalkulation mit jährlich gepflegter Preisliste, Nachkalkulation sowie die Schnittstellen
+zu DATEV, Einkauf und Buchhaltung.
+
+Am aufwendigsten sind die **Fenster**: Jedes Element wird heute von Hand gezeichnet. Daraus entsteht eine Fensterliste für den
+Lieferanten, und dessen Angebot wird anschließend von Hand eingegeben. Bei vielen Positionen und Größen kostet das sehr viel Zeit.
+Daneben passiert Folgendes:
 
 - Anfragen müssen für jeden Händler neu formuliert werden.
 - Antworten und Rückfragen gehen im Postfach unter.
@@ -36,6 +41,12 @@ fertig vorbereiteten Angebot an den Endkunden:
 
 **Leitsatz:** Die KI schreibt nur Entwürfe. Verschickt wird ausschließlich per Klick eines Menschen.
 
+**Rolle neben pinncalc:** Das Tool ersetzt pinncalc nicht, sondern ist ein **Fenster-Modul** davor. Es nimmt das Zeichnen, die Fensterliste
+und das Abtippen der Lieferantenangebote ab und übergibt die Ergebnisse an pinncalc.
+
+**Kundenangebote** sehen immer gleich aus: fester Kopf und Schluss, unten eine transparente Aufstellung, was jede Position kostet.
+Ziel ist ein faires, nachvollziehbares Angebot für den Endkunden.
+
 ## 3. Rahmen und Abgrenzung
 
 | Punkt | Festlegung |
@@ -48,11 +59,13 @@ fertig vorbereiteten Angebot an den Endkunden:
 
 **Nicht im Umfang**, kann später kommen:
 
+- **Alles, was pinncalc heute schon kann:** Kundenstamm, Zeiterfassung, Kalkulation mit Preisliste, Nachkalkulation, DATEV,
+  Einkauf, Buchhaltung. Diese Daten werden höchstens übernommen, nicht neu gepflegt.
 - Kalkulation aus Herstellerpreislisten oder Konfiguratoren
 - Bestellung direkt in Händlerportalen
 - Rechnungen, Buchhaltung, Zahlungsverfolgung
 - Montage- und Personalplanung
-- Anbindung an Branchensoftware wie Klaes oder Orgadata. Ob er so etwas nutzt, ist noch offen, siehe Abschnitt 11.
+- Ersatz von pinncalc. Die **Schnittstelle** zu pinncalc gehört dagegen zum Umfang (Abschnitt 6.12).
 
 ## 4. Begriffe
 
@@ -113,6 +126,8 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-15 | Positionen kopieren, löschen, umsortieren. Raum bzw. Einbauort je Position. | M | 1 |
 | F-16 | Fotos und Skizzen je Position (Kamera am Handy, Zeichnung später) | S | 2 |
 | F-17 | Erfassung **vor Ort ohne Netz**: Daten bleiben auf dem Gerät und werden später übertragen | S | 4 |
+| F-18 | **Zeichnung je Position automatisch** aus Maß, Teilung, Öffnung, Anschlag, Oberlicht/Seitenteil: Ansicht mit Öffnungssymbolen in üblicher Zeichenweise, ersetzt das Zeichnen von Hand | M | 1–2 |
+| F-19 | Zeichnung mit **Bemaßung** als PDF (je Position und als Gesamtliste), im Format, das der Lieferant braucht (Ansicht innen/außen siehe Z-10) | M | 2 |
 
 ### 6.3 Merkmalkatalog
 
@@ -183,6 +198,8 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-82 | Angebot als PDF mit Briefkopf, Logo, Angebotstexten und Gültigkeit des Betriebs. Endkundentaugliche Beschreibung der Positionen ohne Händlerkürzel. | M | 3 |
 | F-83 | **Einkaufspreise und Händlername erscheinen nie im Kundenangebot** | M | 3 |
 | F-84 | Versand an den Endkunden per Klick, anschließend Wiedervorlage zum Nachfassen | S | 3 |
+| F-85 | **Immer gleicher Aufbau:** Kopf (Briefkopf, Einleitung) und Schluss (Bedingungen, Gewährleistung, Gruß) als feste, pflegbare Bausteine | M | 3 |
+| F-86 | **Transparente Aufstellung je Position** für den Endkunden: was jede Position kostet, aufgeschlüsselt nach Element, Zubehör, Montage, Demontage/Entsorgung (Feinheit siehe Z-11). Einkaufspreis und Aufschlag bleiben intern. | M | 3 |
 
 ### 6.10 Zusammenfassung und Nachvollziehbarkeit
 
@@ -191,6 +208,14 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-90 | Zusammenfassung je Vorgang auf Knopfdruck: Stand, offene Punkte, nächste Schritte | M | 2 |
 | F-91 | Verlauf: Wer hat wann was erfasst, geändert oder gesendet? | M | 1 |
 | F-92 | Abschluss eines Vorgangs mit PDF des gesamten Verlaufs | K | 3 |
+
+### 6.12 Schnittstelle zu pinncalc
+
+| Nr. | Anforderung | Prio | Stufe |
+|---|---|---|---|
+| F-110 | **Übergabe an pinncalc:** Positionen mit Beschreibung, Maßen, Stückzahl und Einkaufspreis aus dem bestätigten Händlerangebot, damit dort nichts abgetippt werden muss | M | 3 |
+| F-111 | **Übernahme aus pinncalc:** Kunde/Bauvorhaben und, falls gewünscht, Preise für Montage und Zubehör aus der Preisliste, damit nichts doppelt gepflegt wird | S | 3 |
+| F-112 | Format und Weg der Schnittstelle nach dem, was pinncalc anbietet (z. B. GAEB, Datanorm, CSV/Excel-Import, eigene Schnittstelle). Wird mit dem Hersteller geklärt (Z-9). Bis dahin Export als CSV/Excel. | M | 3 |
 
 ### 6.11 Benutzer und Einstellungen
 
@@ -254,10 +279,14 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | Z-2 | 2–3 frühere Anfragen und 2–3 Händlerangebote je Händler (anonymisiert) | Stufe 2/4 |
 | Z-3 | Sein Merkmalkatalog (Systeme, Dekore, Gläser, Optionen) | Stufe 4 (vorher Anhang A) |
 | Z-4 | Welcher E-Mail-Anbieter (GMX, IONOS, Strato, T-Online, Gmail, Outlook/Microsoft 365?) | Stufe 2 |
-| Z-5 | Nutzt er Branchensoftware (Klaes, Orgadata, Sorba …)? | vor Stufe 3 |
+| Z-5 | ~~Nutzt er Branchensoftware?~~ **Ja: corpora pinncalc** (25.11.2026) | erledigt |
 | Z-6 | Briefkopf, Logo, Angebotstexte, Zahlungsbedingungen, übliche Aufschläge und Montagepauschalen | Stufe 3 |
 | Z-7 | Namen und E-Mail-Adressen der 4 Nutzer | Stufe 4 |
 | Z-8 | Nutzen Händler Portale statt Mail-Anfragen? | Stufe 2 |
+| Z-9 | pinncalc: genaue Bezeichnung, Hersteller, Version, lokal oder Cloud, verfügbare Import-/Exportwege (Kontakt zum Hersteller) | vor Stufe 3 |
+| Z-10 | 1–2 heutige Fensterzeichnungen und Fensterlisten (anonymisiert): Was braucht der Lieferant genau? | Stufe 2 |
+| Z-11 | Muster-Kundenangebot mit festem Kopf und Schluss sowie gewünschter Aufschlüsselung je Position | Stufe 3 |
+| Z-12 | Vollständiger Satz „Die Schnittstelle soll sein …“ aus dem Gespräch | sofort |
 
 ## 12. Risiken
 
@@ -268,7 +297,9 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | Händler-Wording und -Formate unbekannt | Anfragen wirken fremd oder unvollständig | Neutrale Standardvorlage, je Händler anpassbar, sobald Muster da sind (Z-2) |
 | Postfach ist Outlook/Microsoft 365 | Anbindung aufwendiger (Microsoft-Login) | Früh klären (Z-4), Ersatzweg Mail-Programm (F-45) |
 | Händler arbeiten über Portale | Mail-Anfrage nicht möglich | Früh klären (Z-8), dann Export zum Abtippen/Hochladen |
-| Vorhandene Branchensoftware | Doppelte Pflege | Früh klären (Z-5), ggf. Export/Import statt Doppelerfassung |
+| pinncalc bietet keinen passenden Import | Daten müssen doch abgetippt werden | Früh beim Hersteller klären (Z-9). Ausweichweg: CSV/Excel, das pinncalc einlesen kann |
+| Doppelte Pflege von Kunden und Preisen | Fehler, Mehrarbeit | pinncalc bleibt führend, das Tool übernimmt nur (F-111) |
+| Automatische Zeichnung reicht dem Lieferanten nicht | Lieferant fragt nach | Abgleich mit echten Zeichnungen (Z-10), Bemaßung als PDF (F-19) |
 | Endkundendaten (personenbezogen) | DSGVO-Pflichten | Nur erfundene Daten bis Stufe 4, AVV mit allen Dienstleistern, Daten in der EU |
 | Manipulierte eingehende Mails | KI tut Ungewolltes | KI liest Mails nur als Information, nichts passiert ohne Klick (F-55) |
 | Einzelanfertigung | Wartung, Updates, Ausfall | Wartungs- und Supportvereinbarung zwischen Entwickler und Auftraggeber regeln |
@@ -281,6 +312,7 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | E-2 | Hosting | Cloudflare Pages (Vorschau je Branch) |
 | E-3 | KI schon im Pre-Dashboard (Stufe 1) | Ja: Diktat → Positionen ist der Kern und überzeugt beim Vorführen |
 | E-4 | Name der App gegenüber dem Auftraggeber | Arbeitstitel bis zur Abstimmung |
+| E-5 | Wo entsteht das Kundenangebot: in pinncalc (das Tool liefert Positionen und Preise zu) oder im Tool (mit Übergabe an pinncalc für Auftrag und Buchhaltung)? | Abhängig von Z-9. Wenn pinncalc gut importieren kann, das Angebot in pinncalc lassen (eine Wahrheit für Kalkulation und Nachkalkulation) |
 
 ---
 
