@@ -209,14 +209,6 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-91 | Verlauf: Wer hat wann was erfasst, geändert oder gesendet? | M | 1 |
 | F-92 | Abschluss eines Vorgangs mit PDF des gesamten Verlaufs | K | 3 |
 
-### 6.12 Schnittstelle zu pinncalc
-
-| Nr. | Anforderung | Prio | Stufe |
-|---|---|---|---|
-| F-110 | **Übergabe an pinncalc:** Positionen mit Beschreibung, Maßen, Stückzahl und Einkaufspreis aus dem bestätigten Händlerangebot, damit dort nichts abgetippt werden muss | M | 3 |
-| F-111 | **Übernahme aus pinncalc:** Kunde/Bauvorhaben und, falls gewünscht, Preise für Montage und Zubehör aus der Preisliste, damit nichts doppelt gepflegt wird | S | 3 |
-| F-112 | Format und Weg der Schnittstelle nach dem, was pinncalc anbietet (z. B. GAEB, Datanorm, CSV/Excel-Import, eigene Schnittstelle). Wird mit dem Hersteller geklärt (Z-9). Bis dahin Export als CSV/Excel. | M | 3 |
-
 ### 6.11 Benutzer und Einstellungen
 
 | Nr. | Anforderung | Prio | Stufe |
@@ -224,6 +216,14 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | F-100 | Anmeldung mit E-Mail und Passwort für 4 Nutzer. Neue Nutzer legt der Inhaber an. | M | 1 |
 | F-101 | Einstellungen: Firmendaten, Briefkopf, Signatur je Nutzer, Wiedervorlage-Fristen, Merkmalkatalog, Händler, Vorlagen | M | 1–3 |
 | F-102 | Rollen (z. B. Außendienst ohne Einkaufspreise) | K | 4 |
+
+### 6.12 Schnittstelle zu pinncalc
+
+| Nr. | Anforderung | Prio | Stufe |
+|---|---|---|---|
+| F-110 | **Übergabe an pinncalc:** Positionen mit Beschreibung, Maßen, Stückzahl und Einkaufspreis aus dem bestätigten Händlerangebot, damit dort nichts abgetippt werden muss | M | 3 |
+| F-111 | **Übernahme aus pinncalc:** Kunde/Bauvorhaben und, falls gewünscht, Preise für Montage und Zubehör aus der Preisliste, damit nichts doppelt gepflegt wird | S | 3 |
+| F-112 | Format und Weg der Schnittstelle nach dem, was pinncalc anbietet (z. B. GAEB, Datanorm, CSV/Excel-Import, eigene Schnittstelle). Wird mit dem Hersteller geklärt (Z-9). Bis dahin Export als CSV/Excel. | M | 3 |
 
 ## 7. Nicht-funktionale Anforderungen
 
