@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-  <div class="demo-band"><b>Vorschau</b> Erfundene Daten · Auswertung simuliert · es wird nichts versendet</div>
+  <div class="demo-band"><b>Vorschau</b> Erfundene Daten · Auswertung simuliert · es wird nichts versendet <button class="vf-knopf" data-act="vorfuehrung">Vorführung starten ›</button></div>
   <div class="app">
     <aside class="seitenleiste">
       <a class="marke" href="#/">
@@ -24,6 +24,7 @@
         <a href="#/erfassen" data-nav="erfassen"><svg viewBox="0 0 24 24" class="ico"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Erfassen</a>
         <a href="#/postfach" data-nav="postfach"><svg viewBox="0 0 24 24" class="ico"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Postfach<span class="zahl-punkt" data-zahl="post" hidden></span></a>
         <a href="#/haendler" data-nav="haendler"><svg viewBox="0 0 24 24" class="ico"><path d="M3 21V8l9-5 9 5v13"/><path d="M8 21v-7h8v7"/></svg>Großhändler</a>
+        <a href="#/nachkalkulation" data-nav="nachkalkulation"><svg viewBox="0 0 24 24" class="ico"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Nachkalkulation<span class="nav-tag">Ausblick</span></a>
         <a href="#/einstellungen" data-nav="einstellungen"><svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Einstellungen</a>
       </nav>
       <div class="nutzer"><span class="avatar">MM</span><span>Max Muster<small>4 Benutzer</small></span></div>
@@ -35,7 +36,7 @@
     <a href="#/vorgaenge" data-nav="vorgaenge"><svg viewBox="0 0 24 24" class="ico"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>Vorgänge</a>
     <a href="#/erfassen" data-nav="erfassen" class="mitte"><svg viewBox="0 0 24 24" class="ico"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Erfassen</a>
     <a href="#/postfach" data-nav="postfach"><svg viewBox="0 0 24 24" class="ico"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Postfach<span class="zahl-punkt" data-zahl="post" hidden></span></a>
-    <a href="#/haendler" data-nav="haendler"><svg viewBox="0 0 24 24" class="ico"><path d="M3 21V8l9-5 9 5v13"/><path d="M8 21v-7h8v7"/></svg>Händler</a>
+    <a href="#/mehr" data-act="mehr" data-nav="mehr"><svg viewBox="0 0 24 24" class="ico"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Mehr</a>
   </nav>
   <div id="modal" hidden></div>
   <div id="toasts" aria-live="polite"></div>

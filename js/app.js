@@ -1,16 +1,35 @@
 import { FIRMA, NUTZER, KATALOG, FELDER, STATUS, ABLAUF, startDaten } from './daten.js';
 import { auswerten, fehlend, plausibel, positionsZeile, anfrageBetreff, anfrageText, nachfassText, rueckfrageText, zusammenfassung, eur, kundenText } from './ki.js';
+import { zeichnung, normalisiere, kurz, OEFF_FOLGE } from './fenster.js';
+import { kopfAus, leerePosition, maskeHtml, zeileHtml, statusHtml, beispielBlattSvg, blattAuslesen } from './aufmass.js';
+import { seiteNachkalk, AUFTRAEGE, rechne } from './nachkalk.js';
 
 // ——— Zustand ———
-const SPEICHER = 'fenster-demo-v1';
-let d = laden();
+const SPEICHER = 'fenster-demo-v2';
+let d;
 const ich = NUTZER[0];
-const ui = { filter: 'alle', suche: '', postfachFilter: 'alle', erfassung: null, wiz: null, zf: {} };
+const ui = { filter: 'alle', suche: '', postfachFilter: 'alle', erfassung: null, wiz: null, zf: {}, am: null, blatt: null };
 
+const SYSTEM = { Kunststoff: 'Kunststoff 82 mm', 'Kunststoff-Alu': 'Kunststoff-Alu 76 mm', Holz: 'Holz IV 78', 'Holz-Alu': 'Holz-Alu IV 78', Aluminium: 'Alu 75 mm' };
+const PREISE = { Fenster: 95, Balkontür: 140, Terrassentür: 140, 'Hebe-Schiebe-Tür': 480, Haustür: 260, Nebentür: 180, demontage: 45, fensterbank: 85 };
+const BAUSTEINE = {
+  einleitung: '{anrede},\n\nvielen Dank für das angenehme Gespräch. Gerne bieten wir Ihnen für Ihr Vorhaben „{vorhaben}“ an. Jede Position ist einzeln aufgeführt – mit Element, Montage und Nebenleistungen –, damit Sie genau sehen, wofür Sie bezahlen.',
+  schluss: 'Alle Maße werden vor der Bestellung durch ein verbindliches Aufmaß bestätigt. Lieferzeit ca. {lieferzeit} nach Auftragserteilung und technischer Klärung.\n\nZahlungsbedingungen: 30 % bei Auftragserteilung, Restbetrag nach Montage. Es gelten die gesetzlichen Gewährleistungsfristen.\nDieses Angebot ist gültig bis {gueltig}.\n\nWir freuen uns auf Ihren Auftrag.',
+};
 function laden() {
-  try { const s = JSON.parse(localStorage.getItem(SPEICHER)); if (s && s.version === 1) return s; } catch { /* privat/blockiert */ }
-  return startDaten();
+  let x = null;
+  try { const s = JSON.parse(localStorage.getItem(SPEICHER)); if (s && s.version === 1) x = s; } catch { /* privat/blockiert */ }
+  x ||= startDaten();
+  x.preise ||= { ...PREISE }; x.bausteine ||= { ...BAUSTEINE }; x.gestaltung ||= 'anthrazit';
+  for (const v of x.vorgaenge) {
+    v.positionen.forEach(normalisiere);
+    v.aufmass ||= { system: SYSTEM[v.positionen[0]?.material] || '', bau: /(sanierung|altbau|tausch)/i.test(v.art) ? 'Altbau' : 'Neubau', montage: 'pauschal', lieferung: 'Lieferung' };
+  }
+  return x;
 }
+const MARKEN = [['anthrazit', 'Anthrazit / Orange', '#2b3033', '#c8501c'], ['blau', 'Dunkelblau / Rot', '#1b2a5e', '#c8102e'], ['gruen', 'Tannengrün / Holz', '#1f3a32', '#b07a3a'], ['grau', 'Graphit / Gelb', '#26282b', '#d9a400']];
+function marke() { document.documentElement.dataset.marke = d.gestaltung || 'anthrazit'; }
+d = laden();
 function speichern() { try { localStorage.setItem(SPEICHER, JSON.stringify(d)); } catch { /* egal */ } }
 
 // ——— Helfer ———
@@ -139,6 +158,7 @@ function seiteUebersicht() {
           <li><a href="#/postfach/${m.id}"><span class="kat kat-${katKlasse(m.kategorie)}">${m.kategorie}</span>
           <b>${esc(absender(m))}</b><span class="leise ellipse">${esc(m.ki)}</span></a></li>`).join('')}</ul>` : '<p class="leise">Keine neuen Nachrichten.</p>'}
       </section>
+      ${nkTeaser()}
       <section class="karte">
         <h2>Nächste Wiedervorlagen</h2>
         ${wvs.length ? `<ul class="liste-kompakt">${wvs.slice(0, 5).map((a) => `
@@ -146,6 +166,12 @@ function seiteUebersicht() {
       </section>
     </div>
   </div>`;
+}
+
+function nkTeaser() {
+  const unter = AUFTRAEGE.filter((a) => rechne(a).diff < -0.005 * a.umsatz).length;
+  return `<a class="karte nk-teaser" href="#/nachkalkulation"><h2>Nachkalkulation <span class="tag-ausblick">Ausblick</span></h2>
+    <p><b>${unter} von ${AUFTRAEGE.length}</b> abgeschlossenen Aufträgen unter Plan. Hebe-Schiebe-Türen brauchen deutlich mehr Montagezeit als kalkuliert.</p><span class="leise klein">Ansehen ›</span></a>`;
 }
 
 function haendlerPunkte(v) {
@@ -183,57 +209,20 @@ function seiteVorgaenge() {
   </div>`;
 }
 
-// Ansicht von innen mit Öffnungssymbolen nach üblicher Zeichenweise (Spitze zeigt zur Bandseite)
-function ansicht(p, max = 92) {
-  const b = +p.b || 1000, h = +p.h || 1000;
-  const f = max / Math.max(b, h);
-  let W = Math.max(30, b * f), Hh = Math.max(30, h * f);
-  const L = []; const r = (x, y, w, hh, k = '') => L.push(`<rect x="${x}" y="${y}" width="${w}" height="${hh}" class="${k}"/>`);
-  const l = (pts, k = '') => L.push(`<polyline points="${pts.map((q) => q.join(',')).join(' ')}" class="${k}"/>`);
-  const o = 3; r(o, o, W, Hh, 'rahmen');
-  let top = o; let hoch = Hh;
-  if (p.teilung === 'mit Oberlicht') { r(o + 3, o + 3, W - 6, Hh * 0.22, 'fluegel'); top = o + Hh * 0.22 + 3; hoch = Hh - Hh * 0.22 - 3; }
-  let felder = 1;
-  if (/^2-/.test(p.teilung) || p.art === 'Hebe-Schiebe-Tür') felder = 2;
-  if (/^3-/.test(p.teilung)) felder = 3;
-  const seite = p.teilung === 'mit Seitenteil';
-  const breiten = seite ? [W * 0.7, W * 0.3] : Array(felder).fill(W / felder);
-  let x = o;
-  breiten.forEach((bw, i) => {
-    const fx = x + 3, fy = top + 3, fw = bw - 6, fh = hoch - 6;
-    r(fx, fy, fw, fh, 'fluegel');
-    let oe = p.oeffnung; let band = p.anschlag === 'DIN rechts' ? 'r' : 'l';
-    if (seite && i === 1) oe = 'Fest';
-    if (felder > 1 && p.art !== 'Hebe-Schiebe-Tür') band = i === 0 ? 'l' : i === felder - 1 ? 'r' : band;
-    if (oe === 'Stulp (Dreh-Kipp/Dreh)') oe = (i === 0) === (p.anschlag !== 'DIN links') ? 'Dreh' : 'Dreh-Kipp';
-    if (p.art === 'Hebe-Schiebe-Tür') {
-      const schiebt = (i === 1) === (p.anschlag !== 'DIN rechts');
-      if (schiebt) { const y = fy + fh * 0.55; const a = i === 1 ? -1 : 1; const x0 = fx + fw / 2 + a * fw * 0.25; const x1 = fx + fw / 2 - a * fw * 0.25; l([[x0, y], [x1, y]], 'sym'); l([[x1 + a * 5, y - 4], [x1, y], [x1 + a * 5, y + 4]], 'sym'); }
-      else L.push(`<text x="${fx + fw / 2}" y="${fy + fh / 2 + 4}" class="fest">F</text>`);
-    } else if (oe === 'Fest') L.push(`<text x="${fx + fw / 2}" y="${fy + fh / 2 + 4}" class="fest">F</text>`);
-    else {
-      if (/Dreh|nach (innen|außen)/.test(oe)) l(band === 'l' ? [[fx + fw, fy], [fx, fy + fh / 2], [fx + fw, fy + fh]] : [[fx, fy], [fx + fw, fy + fh / 2], [fx, fy + fh]], 'sym');
-      if (/Kipp/.test(oe)) l([[fx, fy], [fx + fw / 2, fy + fh], [fx + fw, fy]], 'sym kipp');
-    }
-    x += bw;
-  });
-  return `<svg class="ansicht" viewBox="0 0 ${W + 6} ${Hh + 6}" width="${W + 6}" height="${Hh + 6}" role="img" aria-label="Ansicht ${esc(p.art)} ${esc(p.oeffnung || '')}">${L.join('')}</svg>`;
-}
-
 function positionKarte(v, p, bearbeitbar = true) {
   const fehlt = fehlend(p); const warn = plausibel(p);
   const zeile = (t, w) => w ? `<dt>${t}</dt><dd>${esc(w)}</dd>` : '';
   const oeff = [p.oeffnung, p.anschlag].filter(Boolean).join(', ');
-  const extra = [p.glasOpt, p.rollladen !== 'keiner' && p.rollladen ? 'Rollladen ' + p.rollladen : '', p.beschlag !== 'Standard' ? p.beschlag : '', p.sprossen !== 'keine' && p.sprossen ? 'Sprossen ' + p.sprossen : ''].filter(Boolean).join(' · ');
+  const extra = [p.glasOpt, p.randverbund ? 'Randverbund ' + p.randverbund : '', p.dichtung ? 'Dichtung ' + p.dichtung : '', p.beschlag !== 'Standard' ? p.beschlag : '', p.sprossen !== 'keine' && p.sprossen ? 'Sprossen ' + p.sprossen : '', p.fbInnen ? 'FB innen ' + p.fbInnen : '', p.fbAussen ? 'FB außen ' + p.fbAussen : ''].filter(Boolean).join(' · ');
   return `
   <article class="pos ${fehlt.length ? 'pos-fehlt' : ''}">
     <header>
       <span class="posnr">${String(p.nr).padStart(2, '0')}</span>
       <div class="pos-titel"><b>${esc(p.raum || '–')}</b><span>${p.stk} × ${esc(p.art)}</span></div>
-      ${bearbeitbar ? `<button class="knopf klein geist nur-ico" data-act="posBearbeiten" data-arg="${v.id}|${p.nr}" title="Bearbeiten" aria-label="Pos. ${p.nr} bearbeiten">${ico('stift')}</button>` : ''}
+      ${bearbeitbar ? `<a class="knopf klein geist nur-ico" href="#/aufmass/${v.id}/${p.nr}" title="Im Aufmaß bearbeiten" aria-label="Pos. ${p.nr} bearbeiten">${ico('stift')}</a>` : ''}
     </header>
     <div class="pos-koerper">
-      <figure>${ansicht(p)}</figure>
+      <figure>${zeichnung(p)}</figure>
       <div>
         <div class="pos-mass">${p.b || '–'} × ${p.h || '–'}</div>
         <div class="pos-masstyp">mm · ${esc(p.masstyp || 'Maßart offen')}</div>
@@ -242,6 +231,7 @@ function positionKarte(v, p, bearbeitbar = true) {
         <dl class="werte">
           ${zeile('Material', [p.material, p.teilung !== '1-flügelig' ? p.teilung : ''].filter(Boolean).join(', '))}
           ${zeile('Öffnung', oeff)}
+          ${zeile('Behang', p.rollladen && p.rollladen !== 'keiner' ? [p.rollladen, p.gurt].filter(Boolean).join(', ') : '')}
           ${zeile('Glas', p.glas)}
           ${zeile('Farbe', p.farbeInnen || p.farbeAussen ? `innen ${p.farbeInnen || '?'} · außen ${p.farbeAussen || '?'}` : '')}
         </dl>
@@ -259,13 +249,14 @@ function seiteVorgang(id, tab = 'positionen') {
   const ang = d.angebote.filter((o) => o.vorgang === id);
   const mails = d.mails.filter((m) => m.vorgang === id);
   const schritt = ABLAUF.indexOf(v.status === 'rueckfrage' ? 'angefragt' : v.status);
-  const tabs = [['positionen', `Positionen (${v.positionen.length})`], ['anfragen', `Anfragen (${anf.length})`], ['angebote', `Händlerangebote (${ang.length})`], ['kundenangebot', 'Kundenangebot'], ['verlauf', `Verlauf (${mails.length})`]];
-  const inhalt = { positionen: tabPositionen, anfragen: tabAnfragen, angebote: tabAngebote, kundenangebot: tabKundenangebot, verlauf: tabVerlauf }[tab] || tabPositionen;
+  const tabs = [['positionen', `Positionen (${v.positionen.length})`], ['zeichnungen', 'Zeichnungen'], ['anfragen', `Anfragen (${anf.length})`], ['angebote', `Händlerangebote (${ang.length})`], ['kundenangebot', 'Kundenangebot'], ['verlauf', `Verlauf (${mails.length})`]];
+  const inhalt = { positionen: tabPositionen, zeichnungen: tabZeichnungen, anfragen: tabAnfragen, angebote: tabAngebote, kundenangebot: tabKundenangebot, verlauf: tabVerlauf }[tab] || tabPositionen;
   const zf = ui.zf[id];
   return `
   <nav class="krumen"><a href="#/vorgaenge">Vorgänge</a> › <span>${v.id}</span></nav>
   <div class="kopf"><div><h1>${esc(v.kunde)} <span class="leise">· ${esc(v.art)}</span></h1>
-  <p class="leise"><span class="nr">${v.id}</span> · ${esc(v.adresse)} · ${esc(v.tel)} · ${esc(v.email)}</p></div>
+  <p class="leise"><span class="nr">${v.id}</span> · ${esc(v.adresse)} · ${esc(v.tel)} · ${esc(v.email)}</p>
+  <p class="aufmass-zeile">${[v.aufmass?.system, v.aufmass?.bau, v.aufmass?.montage ? 'Montage ' + v.aufmass.montage : '', v.aufmass?.lieferung].filter(Boolean).map((x) => `<span>${esc(x)}</span>`).join('')}</p></div>
   <div class="knopfreihe">${badge(v.status)} ${avatar(N(v.nutzer))}</div></div>
   <ol class="ablauf">${ABLAUF.map((s, i) => `<li class="${i < schritt ? 'fertig' : i === schritt ? 'jetzt' : ''}">${i === schritt && v.status === 'rueckfrage' ? 'Rückfrage' : STATUS[s].text.replace(' prüfen', '').replace(' in Arbeit', '')}</li>`).join('')}</ol>
   <section class="karte ki-box">
@@ -283,12 +274,43 @@ function tabPositionen(v) {
   <div class="werkzeug">
     <div class="leise">${fehlt ? `<span class="hinweis rot inline">${ico('warn')} ${fehlt} Position${fehlt > 1 ? 'en' : ''} unvollständig</span>` : `<span class="hinweis gruen inline">${ico('haken')} Alle Pflichtangaben vorhanden</span>`}</div>
     <div class="knopfreihe">
-      <button class="knopf" data-act="posNeu" data-arg="${v.id}">${ico('plus')} Position</button>
+      <a class="knopf" href="#/aufmass/${v.id}">${ico('stift')} Aufmaß bearbeiten</a>
+      <a class="knopf" href="#/aufmass/${v.id}/neu">${ico('plus')} Position</a>
       <a class="knopf" href="#/erfassen/${v.id}">${ico('mic')} Einsprechen</a>
       <button class="knopf primaer" data-act="neueAnfrage" data-arg="${v.id}">${ico('senden')} Anfrage an Händler</button>
     </div>
   </div>
   <div class="pos-raster">${v.positionen.map((p) => positionKarte(v, p)).join('')}</div>`;
+}
+
+function tabZeichnungen(v) {
+  const k = v.aufmass || {}; const p0 = v.positionen[0] || {};
+  const wert = (t, w) => w ? `<dt>${t}</dt><dd>${esc(w)}</dd>` : '';
+  return `
+  <div class="werkzeug"><p class="leise">Die Zeichnungen entstehen automatisch aus dem Aufmaß: Ansicht von innen, Maße in mm, Öffnungssymbole nach üblicher Zeichenweise. So geht die Fensterliste an den Händler – nichts mehr von Hand zeichnen.</p>
+  <button class="knopf primaer" data-act="drucken">${ico('doc')} Fensterliste drucken / PDF</button></div>
+  <section class="fliste" id="druckbereich">
+    <header class="fl-kopf">
+      <div><span class="fl-titel">Fensterliste</span><span class="nr">Kommission ${v.id}</span><br><span class="leise">${esc(FIRMA.name)} · ${esc(FIRMA.tel)}</span></div>
+      <dl class="daten">${wert('System', k.system)}${wert('Material', p0.material)}${wert('Farbe', p0.farbeInnen ? `innen ${p0.farbeInnen} / außen ${p0.farbeAussen}` : '')}${wert('Glas', p0.glas)}${wert('Bau', k.bau)}${wert('Positionen', `${v.positionen.length} / ${v.positionen.reduce((s, p) => s + (+p.stk || 0), 0)} Elemente`)}</dl>
+    </header>
+    <div class="fl-raster">${v.positionen.map((p) => `
+      <article class="fl-pos ${fehlend(p).length ? 'pos-fehlt' : ''}">
+        <div class="fl-pos-kopf"><span class="posnr">${String(p.nr).padStart(2, '0')}</span><b>${p.stk} × ${esc(p.art)}</b><span class="leise">${esc(p.raum)}</span></div>
+        <div class="fl-zeichnung">${zeichnung(p, { max: 190, mass: true })}</div>
+        <dl class="werte">
+          <dt>Öffnung</dt><dd>${esc(kurz(p))}</dd>
+          <dt>Maß</dt><dd>${p.b} × ${p.h} mm, ${esc(p.masstyp)}${p.fertigB ? ` · Fertig ${p.fertigB} × ${p.fertigH}` : ''}</dd>
+          ${wert('Glas', [p.glas, p.glasOpt].filter(Boolean).join(', '))}
+          ${wert('Behang', p.rollladen && p.rollladen !== 'keiner' ? [p.rollladen, p.gurt, p.behangFarbe].filter(Boolean).join(', ') : '')}
+          ${wert('Ausführung', [p.randverbund && 'RV ' + p.randverbund, p.dichtung && 'Dichtung ' + p.dichtung, p.griff && 'Griff ' + p.griff].filter(Boolean).join(' · '))}
+          ${wert('Fensterbank', [p.fbAussen && 'außen ' + p.fbAussen, p.fbInnen && 'innen ' + p.fbInnen].filter(Boolean).join(' · '))}
+          ${wert('Bemerkung', p.bemerkung)}
+        </dl>
+        ${fehlend(p).length ? `<p class="pos-hinweis rot">Fehlt: ${fehlend(p).map((x) => FELDER[x]).join(', ')}</p>` : ''}
+      </article>`).join('')}</div>
+    <p class="fl-fuss leise klein">Ansicht von innen · Dreieck: Spitze zeigt zur Bandseite · gestrichelt: Kipp · F: fest · Pfeil: Schieberichtung · Maße in mm</p>
+  </section>`;
 }
 
 function tabAnfragen(v, anf) {
@@ -352,26 +374,33 @@ function tabAngebote(v, anf, ang) {
   </section>`;
 }
 
-const MONTAGE = { Fenster: 95, Balkontür: 140, Terrassentür: 140, 'Hebe-Schiebe-Tür': 480, Haustür: 260, Nebentür: 180 };
-
+const rund5 = (x) => Math.round(x / 5) * 5;
 function kalkulation(v) {
   const ka = d.kundenangebote[v.id]; if (!ka) return null;
   const o = d.angebote.find((x) => x.id === ka.angebot); if (!o) return null;
-  const f = 1 + ka.aufschlag / 100;
-  const zeilen = v.positionen.map((p) => {
+  const f = 1 + ka.aufschlag / 100; const P = d.preise;
+  const kat = { element: 0, montage: 0, demontage: 0, fensterbank: 0 };
+  const pos = v.positionen.map((p) => {
     const op = o.pos.find((x) => x.nr === p.nr);
     const ek = op ? op.preis : 0;
-    const ep = Math.round(ek * f / 5) * 5;
-    return { p, ek: ek * p.stk, ep, gp: ep * p.stk };
+    const t = [{ art: 'element', text: kundenText(p), menge: p.stk, ep: rund5(ek * f) }];
+    if (ka.montage) t.push({ art: 'montage', text: 'Montage nach RAL-Leitfaden, Abdichtung innen und außen', menge: p.stk, ep: P[p.art] ?? P.Fenster });
+    if (ka.demontage) t.push({ art: 'demontage', text: 'Ausbau und fachgerechte Entsorgung des Altelements', menge: p.stk, ep: P.demontage });
+    if (ka.fensterbank && p.art === 'Fenster') t.push({ art: 'fensterbank', text: 'Fensterbank innen, Kunststein', menge: p.stk, ep: P.fensterbank });
+    t.forEach((z) => { z.gp = z.ep * z.menge; kat[z.art] += z.gp; });
+    return { p, ek: ek * p.stk, teile: t, summe: t.reduce((s, z) => s + z.gp, 0) };
   });
-  const elemente = v.positionen.reduce((s, p) => s + p.stk, 0);
-  const extra = [];
-  if (ka.montage) extra.push({ text: `Montage nach RAL-Leitfaden inkl. Abdichtung innen/außen, ${elemente} Elemente`, gp: v.positionen.reduce((s, p) => s + (MONTAGE[p.art] || 95) * p.stk, 0) });
-  if (ka.demontage) extra.push({ text: `Ausbau und fachgerechte Entsorgung der Altelemente, ${elemente} Stück`, gp: 45 * elemente });
-  if (ka.fensterbank) { const n = v.positionen.filter((p) => p.art === 'Fenster').reduce((s, p) => s + p.stk, 0); if (n) extra.push({ text: `Fensterbänke innen, Kunststein, ${n} Stück`, gp: 85 * n }); }
-  const netto = zeilen.reduce((s, z) => s + z.gp, 0) + extra.reduce((s, z) => s + z.gp, 0);
-  const ek = zeilen.reduce((s, z) => s + z.ek, 0);
-  return { ka, o, zeilen, extra, netto, mwst: netto * 0.19, brutto: netto * 1.19, ek, ertrag: zeilen.reduce((s, z) => s + z.gp, 0) - ek };
+  const netto = pos.reduce((s, z) => s + z.summe, 0);
+  const ek = pos.reduce((s, z) => s + z.ek, 0);
+  return { ka, o, pos, kat, netto, mwst: netto * 0.19, brutto: netto * 1.19, ek, ertrag: kat.element - ek };
+}
+
+function baustein(text, v, o) {
+  const name = v.kunde;
+  const anrede = /^Herr\s/.test(name) ? `Sehr geehrter ${name}` : `Sehr geehrte ${name}`;
+  const lz = (o?.lieferzeit || '6 Wochen').replace(/(\d+)–?(\d+)?\s*Wochen/, (m, a, b) => (+(b || a) + 2) + ' Wochen');
+  return esc(text).replace(/\{anrede\}/g, esc(anrede)).replace(/\{vorhaben\}/g, esc(v.art)).replace(/\{kunde\}/g, esc(name))
+    .replace(/\{lieferzeit\}/g, esc(lz)).replace(/\{gueltig\}/g, datum(inTagen(30)));
 }
 
 function abwHinweis(v, o) {
@@ -384,19 +413,22 @@ function tabKundenangebot(v) {
   const k = kalkulation(v);
   if (!k) return `<div class="leer karte">${ico('euro')}<p>Noch kein Händlerangebot als Grundlage gewählt.</p><a class="knopf" href="#/vorgang/${v.id}/angebote">Händlerangebote ansehen</a></div>`;
   const { ka, o } = k;
+  const anteil = (x) => k.netto ? Math.round(x / k.netto * 100) : 0;
+  const KAT = [['element', 'Fenster und Türen (Elemente)'], ['montage', 'Montage'], ['demontage', 'Ausbau und Entsorgung'], ['fensterbank', 'Fensterbänke']];
   return `
   <div class="ka-raster">
     <section class="karte ka-steuer">
       <h2>Kalkulation</h2>
       <label>Grundlage<select data-input="kaAngebot" data-arg="${v.id}">${d.angebote.filter((x) => x.vorgang === v.id).map((x) => `<option value="${x.id}" ${x.id === o.id ? 'selected' : ''}>${esc(H(x.haendler).kurz)} – ${x.nummer}</option>`).join('')}</select></label>
       <label>Aufschlag auf Einkauf: <b id="ka-wert">${ka.aufschlag} %</b><input type="range" min="0" max="60" step="1" value="${ka.aufschlag}" data-input="kaAufschlag" data-arg="${v.id}"></label>
-      <label class="haken"><input type="checkbox" ${ka.montage ? 'checked' : ''} data-input="kaMontage" data-arg="${v.id}"> Montage</label>
-      <label class="haken"><input type="checkbox" ${ka.demontage ? 'checked' : ''} data-input="kaDemontage" data-arg="${v.id}"> Demontage + Entsorgung</label>
+      <label class="haken"><input type="checkbox" ${ka.montage ? 'checked' : ''} data-input="kaMontage" data-arg="${v.id}"> Montage je Position</label>
+      <label class="haken"><input type="checkbox" ${ka.demontage ? 'checked' : ''} data-input="kaDemontage" data-arg="${v.id}"> Ausbau + Entsorgung je Position</label>
       <label class="haken"><input type="checkbox" ${ka.fensterbank ? 'checked' : ''} data-input="kaFensterbank" data-arg="${v.id}"> Fensterbänke innen</label>
+      <p class="leise klein">Montage- und Nebenpreise kommen aus der Preisliste (Einstellungen). Kopf- und Schlusstext ebenso.</p>
       ${abwHinweis(v, o)}
       <div class="intern">
         <div class="intern-titel">${ico('warn')} Nur intern – erscheint nicht im Angebot</div>
-        <dl class="daten"><dt>Einkauf (${esc(H(o.haendler).kurz)})</dt><dd>${eur(k.ek)}</dd><dt>Rohertrag Elemente</dt><dd>${eur(k.ertrag)}</dd><dt>Spanne</dt><dd>${k.netto ? Math.round(k.ertrag / (k.ek + k.ertrag) * 100) : 0} %</dd></dl>
+        <dl class="daten"><dt>Einkauf (${esc(H(o.haendler).kurz)})</dt><dd>${eur(k.ek)}</dd><dt>Rohertrag Elemente</dt><dd>${eur(k.ertrag)}</dd><dt>Spanne Elemente</dt><dd>${k.kat.element ? Math.round(k.ertrag / k.kat.element * 100) : 0} %</dd></dl>
       </div>
       <div class="knopfreihe">
         <button class="knopf" data-act="drucken">${ico('doc')} PDF / Drucken</button>
@@ -405,23 +437,28 @@ function tabKundenangebot(v) {
       ${ka.gesendet ? `<p class="hinweis gruen">${ico('haken')} Gesendet am ${datum(ka.gesendet)}</p>` : ''}
     </section>
     <section class="blatt" id="druckbereich">
-      <div class="blatt-kopf"><div><b>${esc(FIRMA.name)}</b><br>${esc(FIRMA.strasse)} · ${esc(FIRMA.ort)}<br>${esc(FIRMA.tel)} · ${esc(FIRMA.mail)}</div><div class="logo">${ico('fenster')}</div></div>
+      <div class="blatt-kopf"><div><b>${esc(FIRMA.name)}</b>${esc(FIRMA.strasse)} · ${esc(FIRMA.ort)}<br>${esc(FIRMA.tel)} · ${esc(FIRMA.mail)}</div><div class="logo">${ico('fenster')}</div></div>
       <div class="blatt-an">${esc(v.kunde)}<br>${esc(v.adresse.split(',')[0])}<br>${esc(v.adresse.split(',')[1] || '')}</div>
       <div class="blatt-meta"><h2>Angebot ${v.id.replace('V-', 'AG-')}</h2><span>Datum: ${datum(new Date().toISOString())}<br>Gültig bis: ${datum(inTagen(30))}</span></div>
-      <p>Sehr geehrte${v.kunde.startsWith('Herr') ? 'r' : ''} ${esc(v.kunde.replace('Familie', 'Familie'))},<br>vielen Dank für das angenehme Gespräch. Gerne bieten wir Ihnen für Ihr Vorhaben „${esc(v.art)}“ an:</p>
+      <p class="baustein">${baustein(d.bausteine.einleitung, v, o)}</p>
       <table class="ka-tab">
         <thead><tr><th>Pos.</th><th>Beschreibung</th><th class="r">Menge</th><th class="r">Einzelpreis</th><th class="r">Gesamt</th></tr></thead>
-        <tbody>
-          ${k.zeilen.map((z) => `<tr><td>${z.p.nr}</td><td><b>${esc(z.p.raum)}: ${esc(z.p.art)} ${z.p.b} × ${z.p.h} mm</b><br><span class="klein">${esc(kundenText(z.p))}</span></td><td class="r">${z.p.stk}</td><td class="r">${eur(z.ep)}</td><td class="r">${eur(z.gp)}</td></tr>`).join('')}
-          ${k.extra.map((x, i) => `<tr><td>${k.zeilen.length + i + 1}</td><td>${esc(x.text)}</td><td class="r">1</td><td class="r">${eur(x.gp)}</td><td class="r">${eur(x.gp)}</td></tr>`).join('')}
-        </tbody>
-        <tfoot>
-          <tr><td colspan="4" class="r">Summe netto</td><td class="r">${eur(k.netto)}</td></tr>
-          <tr><td colspan="4" class="r">zzgl. 19 % MwSt.</td><td class="r">${eur(k.mwst)}</td></tr>
-          <tr class="gesamt"><td colspan="4" class="r">Gesamtbetrag</td><td class="r">${eur(k.brutto)}</td></tr>
-        </tfoot>
+        ${k.pos.map((z) => `<tbody class="ka-pos">
+          <tr class="ka-pos-kopf"><td>${z.p.nr}</td><td colspan="4"><div class="ka-pos-titel">${zeichnung(z.p, { max: 46 })}<div><b>${esc(z.p.raum ? z.p.raum + ': ' : '')}${esc(z.p.art)} ${z.p.b} × ${z.p.h} mm</b><br><span class="klein">${esc(z.p.oeffnung)}${z.p.anschlag ? ', ' + esc(z.p.anschlag) : ''}</span></div></div></td></tr>
+          ${z.teile.map((t, i) => `<tr class="ka-teil"><td class="klein">${z.p.nr}.${i + 1}</td><td><span class="klein">${esc(t.text)}</span></td><td class="r">${t.menge}</td><td class="r">${eur(t.ep)}</td><td class="r">${eur(t.gp)}</td></tr>`).join('')}
+          <tr class="ka-pos-summe"><td></td><td colspan="3" class="r">Summe Pos. ${z.p.nr}</td><td class="r">${eur(z.summe)}</td></tr>
+        </tbody>`).join('')}
       </table>
-      <p class="klein">Lieferzeit ca. ${esc(o.lieferzeit.replace(/(\d+)–?(\d+)?\s*Wochen/, (m, a, b) => (+(b || a) + 2) + ' Wochen'))} nach Auftragserteilung und technischer Klärung. Alle Maße werden vor Bestellung durch ein verbindliches Aufmaß bestätigt.</p>
+      <div class="ka-zusammen">
+        <h3>So setzt sich Ihr Preis zusammen</h3>
+        ${KAT.filter(([x]) => k.kat[x]).map(([x, t]) => `<div class="ka-z-zeile"><span>${t}</span><i style="--w:${anteil(k.kat[x])}%"></i><span class="r">${eur(k.kat[x])}</span><small>${anteil(k.kat[x])} %</small></div>`).join('')}
+        <div class="ka-summen">
+          <div><span>Summe netto</span><span>${eur(k.netto)}</span></div>
+          <div><span>zzgl. 19 % MwSt.</span><span>${eur(k.mwst)}</span></div>
+          <div class="gesamt"><span>Gesamtbetrag</span><span>${eur(k.brutto)}</span></div>
+        </div>
+      </div>
+      <p class="baustein klein">${baustein(d.bausteine.schluss, v, o)}</p>
       <p>Mit freundlichen Grüßen<br>${esc(ich.name)}</p>
     </section>
   </div>`;
@@ -497,14 +534,91 @@ function mailDetail(m) {
   </article>`;
 }
 
-function seiteErfassen(vid) {
+function erfTabs(modus) {
+  const t = [['blatt', 'Aufmaßblatt fotografieren'], ['diktat', 'Einsprechen / Notiz'], ['maske', 'Direkt eingeben']];
+  return `<div class="tabs erf-tabs">${t.map(([k, x]) => `<a class="${modus === k ? 'an' : ''}" href="#/erfassen${k === 'blatt' ? '' : '/' + k}">${x}</a>`).join('')}</div>`;
+}
+
+function seiteErfassen(a) {
+  if (a && a.startsWith('V-')) return seiteDiktat(a);
+  const modus = a || 'blatt';
+  const kopf = `<div class="kopf"><div><h1>Neuer Vorgang</h1>
+  <p class="leise">Drei Wege, ein Ergebnis: eine geprüfte Positionsliste mit Zeichnungen. Auf der Baustelle bleibt alles wie gewohnt.</p></div></div>${erfTabs(modus)}`;
+  if (modus === 'diktat') return kopf + seiteDiktat(null, true);
+  if (modus === 'maske') {
+    if (!ui.am || ui.am.ziel || ui.am.quelle !== 'leer') { const k = kopfAus(null); ui.am = { ziel: null, quelle: 'leer', kopf: k, positionen: [leerePosition(1, k)] }; }
+    return kopf + `<div class="am">${maskeHtml(ui.am)}</div>`;
+  }
+  return kopf + seiteBlatt();
+}
+
+function seiteBlatt() {
+  const b = ui.blatt;
+  if (!b) return `
+  <div class="blatt-start">
+    <label class="blatt-wahl">
+      <input type="file" accept="image/*" capture="environment" data-blatt-foto hidden>
+      ${ico('doc')}<b>Foto aufnehmen oder hochladen</b><span>Das ausgefüllte Aufmaßblatt fotografieren – direkt auf der Baustelle oder im Büro.</span>
+    </label>
+    <button class="blatt-wahl" data-act="blattBeispiel">${ico('fenster')}<b>Beispielblatt verwenden</b><span>Ein erfundenes, handschriftlich ausgefülltes Blatt zum Ausprobieren.</span></button>
+  </div>
+  <section class="karte blatt-erklaer"><h2>So funktioniert es</h2>
+    <ol><li><b>Aufmessen wie immer</b> – Papier, Klemmbrett, Kurzschreibweise („DK – –“, „Raff“, „+“).</li>
+    <li><b>Blatt fotografieren</b> – die App liest Kopf, Maße, Öffnungen, Skizzen und Bemerkungen.</li>
+    <li><b>Prüfen</b> – unsichere Stellen sind gelb, fehlende rot. Das Foto liegt daneben.</li>
+    <li><b>Fertig</b> – Zeichnungen mit Bemaßung entstehen automatisch, die Anfrage an den Händler ist einen Klick entfernt.</li></ol></section>`;
+  if (b.quelle === 'foto' && !ui.am) return `
+  <div class="blatt-ansicht">
+    <figure class="blatt-foto"><img src="${b.foto}" alt="Eigenes Foto"></figure>
+    <section class="karte"><h2>Eigenes Foto</h2>
+      <p>Das Foto bleibt nur in diesem Browserfenster und wird nirgends gespeichert.</p>
+      <p class="hinweis gelb">${ico('warn')} In dieser Vorschau kann nur das Beispielblatt ausgelesen werden. Das Lesen echter Handschrift übernimmt in der fertigen App die KI.</p>
+      <div class="knopfreihe"><button class="knopf primaer" data-act="blattBeispiel">Mit Beispielblatt ausprobieren</button><button class="knopf geist" data-act="blattNeu">Anderes Foto</button></div>
+    </section>
+  </div>`;
+  const blatt = `<figure class="blatt-foto papierfoto ${b.scan ? 'scan' : ''}">${beispielBlattSvg(datum(new Date().toISOString()))}</figure>`;
+  if (!ui.am) return `
+  <div class="blatt-ansicht">
+    ${blatt}
+    <section class="karte"><h2>Beispielblatt</h2>
+      <p>Handschriftlich ausgefülltes Aufmaß: 6 Positionen, Kopf mit System und Farbe, Kurzschreibweise wie auf der Baustelle. Alle Angaben sind erfunden.</p>
+      <div id="scan-status">${b.scan ? '<p class="denkt">Blatt wird gelesen<span>.</span><span>.</span><span>.</span></p>' : ''}</div>
+      <div class="knopfreihe"><button class="knopf primaer" data-act="blattAuslesen" ${b.scan ? 'disabled' : ''}>Blatt auslesen</button><button class="knopf geist" data-act="blattNeu">Zurück</button></div>
+    </section>
+  </div>`;
+  return `
+  <div class="blatt-geprueft">
+    <aside class="blatt-seite">${blatt}<p class="leise klein">Original zum Vergleichen. Unsichere Stellen sind in der Liste gelb, fehlende rot markiert.</p></aside>
+    <div class="am">
+      ${ui.am.hinweise?.length ? `<section class="karte am-hinweise"><h2>Beim Lesen aufgefallen</h2><ul>${ui.am.hinweise.map((h) => `<li>${esc(h)}</li>`).join('')}</ul></section>` : ''}
+      ${maskeHtml(ui.am)}
+    </div>
+  </div>`;
+}
+
+function seiteAufmass(vid, nr) {
+  const v = V(vid);
+  if (!v) return '<div class="leer karte"><p>Vorgang nicht gefunden.</p></div>';
+  if (!ui.am || ui.am.ziel !== vid) {
+    ui.am = { ziel: vid, quelle: 'vorgang', kopf: { ...kopfAus(v), ...(v.aufmass || {}) }, positionen: v.positionen.map((p) => normalisiere(JSON.parse(JSON.stringify(p)))) };
+  }
+  if (nr === 'neu' && !ui.am.neuDa) { ui.am.positionen.push(leerePosition(ui.am.positionen.length + 1, ui.am.kopf)); ui.am.neuDa = true; ui.am.fokus = ui.am.positionen.length; }
+  else if (nr && nr !== 'neu') ui.am.fokus = +nr;
+  setTimeout(() => { const el = ui.am?.fokus && document.getElementById('am-pos-' + ui.am.fokus); if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('blink'); } }, 30);
+  return `
+  <nav class="krumen"><a href="#/vorgaenge">Vorgänge</a> › <a href="#/vorgang/${v.id}">${v.id}</a> › <span>Aufmaß</span></nav>
+  <div class="kopf"><div><h1>Aufmaß <span class="leise">· ${esc(v.kunde)}</span></h1><p class="leise">Aufgebaut wie das Aufmaßblatt. Die Zeichnung links ändert sich sofort mit.</p></div></div>
+  <div class="am">${maskeHtml(ui.am)}</div>`;
+}
+
+function seiteDiktat(vid, eingebettet = false) {
   const v = vid ? V(vid) : null;
   const e = ui.erfassung;
   const sprache = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
   return `
   ${v ? `<nav class="krumen"><a href="#/vorgaenge">Vorgänge</a> › <a href="#/vorgang/${v.id}">${v.id}</a> › <span>Einsprechen</span></nav>` : ''}
-  <div class="kopf"><div><h1>${v ? `Positionen ergänzen – ${esc(v.kunde)}` : 'Neuer Vorgang'}</h1>
-  <p class="leise">Einsprechen oder tippen, was der Kunde möchte. Die KI macht daraus eine Positionsliste. Sie prüfen, bevor etwas übernommen wird.</p></div></div>
+  ${eingebettet ? '' : `<div class="kopf"><div><h1>${v ? `Positionen ergänzen – ${esc(v.kunde)}` : 'Neuer Vorgang'}</h1>
+  <p class="leise">Einsprechen oder tippen, was der Kunde möchte. Die KI macht daraus eine Positionsliste. Sie prüfen, bevor etwas übernommen wird.</p></div></div>`}
   <div class="erf-raster">
     <section class="karte">
       <h2>1. Wünsche erfassen</h2>
@@ -539,7 +653,7 @@ function erfErgebnis(r, vid) {
   <p class="${offen ? 'hinweis rot' : 'hinweis gruen'}">${ico(offen ? 'warn' : 'haken')} ${r.positionen.length} Positionen erkannt${offen ? ` · ${offen} mit fehlenden Pflichtangaben (rot). Diese können Sie nach dem Übernehmen ergänzen.` : ' · alle Pflichtangaben vorhanden.'}</p>
   <div class="erf-liste">${r.positionen.map((p) => `
     <article class="pos erf">
-      <header><span class="posnr">${String(p.nr).padStart(2, '0')}</span><div class="pos-titel"><b>${esc(p.raum || '–')}</b><span>${p.stk} × ${esc(p.art)}</span></div>${ansicht(p, 56)}</header>
+      <header><span class="posnr">${String(p.nr).padStart(2, '0')}</span><div class="pos-titel"><b>${esc(p.raum || '–')}</b><span>${p.stk} × ${esc(p.art)}</span></div>${zeichnung(p, { max: 56 })}</header>
       <div class="erf-felder">${felder.filter((k) => p[k] || quelle(p, k) === 'fehlt').map((k) => `<span class="ef q-${quelle(p, k) || 'gesagt'}" title="${esc(titel(p, k))}"><small>${FELDER[k]}</small>${p[k] ? esc(p[k]) + (k === 'b' || k === 'h' ? ' mm' : '') : '—'}</span>`).join('')}</div>
       ${plausibel(p).map((w) => `<p class="hinweis gelb">${ico('warn')} ${esc(w)}</p>`).join('')}
     </article>`).join('')}</div>
@@ -574,6 +688,15 @@ function seiteEinstellungen() {
     <section class="karte"><h2>Betrieb</h2><dl class="daten"><dt>Firma</dt><dd>${esc(FIRMA.name)}</dd><dt>Anschrift</dt><dd>${esc(FIRMA.strasse)}, ${esc(FIRMA.ort)}</dd><dt>Telefon</dt><dd>${esc(FIRMA.tel)}</dd><dt>Postfach</dt><dd>${esc(FIRMA.mail)}</dd></dl></section>
     <section class="karte"><h2>Benutzer</h2><ul class="liste-kompakt">${NUTZER.map((n) => `<li>${avatar(n)} ${esc(n.name)}</li>`).join('')}</ul></section>
     <section class="karte"><h2>Fristen</h2><dl class="daten"><dt>Nachfassen Händler</dt><dd>14 Tage (je Händler änderbar)</dd><dt>Nachfassen Kunde</dt><dd>7 Tage</dd><dt>Hinweis Angebotsgültigkeit</dt><dd>7 Tage vor Ablauf</dd></dl></section>
+  </div>
+  <section class="karte"><h2>Gestaltung</h2><p class="leise">Logo und Firmenfarben je Betrieb – App, Fensterliste und Kundenangebot erscheinen in Ihren Farben.</p>
+    <div class="marken">${MARKEN.map(([k, t, a, b]) => `<button class="marke-wahl ${d.gestaltung === k ? 'an' : ''}" data-act="marke" data-arg="${k}"><i style="background:${a}"></i><i style="background:${b}"></i><span>${t}</span></button>`).join('')}</div></section>
+  <div class="raster-2 gleich">
+    <section class="karte"><h2>Angebotstexte · Kopf und Schluss</h2><p class="leise klein">Gelten für jedes Kundenangebot. Platzhalter: {anrede}, {vorhaben}, {kunde}, {lieferzeit}, {gueltig}</p>
+      <label class="am-k">Einleitung<textarea rows="5" data-input="baustein" data-arg="einleitung">${esc(d.bausteine.einleitung)}</textarea></label>
+      <label class="am-k">Schluss<textarea rows="7" data-input="baustein" data-arg="schluss">${esc(d.bausteine.schluss)}</textarea></label></section>
+    <section class="karte"><h2>Preisliste · Montage und Nebenleistungen</h2><p class="leise klein">Netto je Stück. Wird jedes Jahr gepflegt und fließt transparent je Position ins Kundenangebot.</p>
+      <table class="mini preisliste"><tbody>${Object.entries({ ...PREISE, ...d.preise }).map(([k, w]) => `<tr><td>${esc({ demontage: 'Ausbau + Entsorgung', fensterbank: 'Fensterbank innen' }[k] || 'Montage ' + k)}</td><td class="r"><input type="number" value="${w}" data-input="preis" data-arg="${esc(k)}"> €</td></tr>`).join('')}</tbody></table></section>
   </div>
   <section class="karte"><h2>Merkmalkatalog</h2><p class="leise">Vorschlag – wird durch Ihren eigenen Katalog ersetzt. Die KI wählt nur Werte aus dieser Liste.</p>
   <div class="katalog">${kat.map(([k, t]) => `<div><h3>${t}</h3><div class="merkmale">${KATALOG[k].map((x) => `<span class="merkmal">${esc(x)}</span>`).join('')}</div></div>`).join('')}</div></section>
@@ -834,7 +957,7 @@ const AKT = {
     speichern(); schliessen(); render(); toast(`${ico('senden')} Angebot an ${esc(v.kunde)} gesendet · Wiedervorlage in 7 Tagen`);
   },
 
-  posBearbeiten(arg) { const [vid, nr] = arg.split('|'); const v = V(vid); posFormular(v, v.positionen.find((p) => p.nr === +nr), false); },
+  posBearbeiten(arg) { const [vid, nr] = arg.split('|'); location.hash = `#/aufmass/${vid}/${nr}`; },
   posNeu(vid) {
     const v = V(vid); const l = v.positionen[v.positionen.length - 1] || {};
     posFormular(v, { nr: v.positionen.length + 1, stk: 1, art: 'Fenster', raum: '', b: '', h: '', masstyp: 'Bestellmaß', material: l.material || '', farbeInnen: l.farbeInnen || '', farbeAussen: l.farbeAussen || '', teilung: '1-flügelig', oeffnung: 'Dreh-Kipp', anschlag: '', glas: l.glas || '', glasOpt: '', sprossen: 'keine', beschlag: 'Standard', rollladen: 'keiner', bemerkung: '' }, true);
@@ -876,12 +999,13 @@ const AKT = {
     if (!text) { toast('Bitte zuerst etwas einsprechen oder eintippen.'); return; }
     $('#erf-ergebnis').innerHTML = '<h2>2. Vorschlag prüfen</h2><p class="denkt">Notiz wird ausgewertet<span>.</span><span>.</span><span>.</span></p>';
     await warte(1100);
-    ui.erfassung = { text, ergebnis: auswerten(text) };
+    const erg = auswerten(text); erg.positionen.forEach(normalisiere);
+    ui.erfassung = { text, ergebnis: erg };
     $('#erf-ergebnis').innerHTML = '<h2>2. Vorschlag prüfen</h2>' + erfErgebnis(ui.erfassung.ergebnis, vid);
   },
   uebernehmen(vid) {
     const r = ui.erfassung.ergebnis;
-    const pos = r.positionen.map(({ _q, ...p }) => p);
+    const pos = r.positionen.map(({ _q, ...p }) => normalisiere(p));
     let v;
     if (vid) {
       v = V(vid);
@@ -919,12 +1043,120 @@ const AKT = {
     <p class="leise">Liefertermin KW 3 übernommen. Montage kann geplant werden.</p>`, [{ text: 'OK', act: 'schliessen', art: 'primaer' }]);
   },
   archiv(mid) { d.mails = d.mails.filter((m) => m.id !== mid); speichern(); location.hash = '#/postfach'; toast('Archiviert'); },
+  // ——— Aufmaß ———
+  amFeld(arg) { const [i, k] = arg.split('|').map(Number); const p = ui.am.positionen[i]; const fe = p.felder[k];
+    fe.o = OEFF_FOLGE[(OEFF_FOLGE.indexOf(fe.o) + 1) % OEFF_FOLGE.length]; if (fe.o === 'F' || fe.o === 'K') delete fe.band; else fe.band ||= '';
+    delete p._q?.oeffnung; amZeile(i); },
+  amBand(arg) { const [i, k] = arg.split('|').map(Number); const p = ui.am.positionen[i]; const fe = p.felder[k];
+    fe.band = fe.band === 'l' ? 'r' : 'l'; delete p._q?.anschlag; amZeile(i); },
+  amFeldPlus(i) { const p = ui.am.positionen[+i]; p.felder.push({ o: 'DK', band: '' }); if (p.felder.length !== 2) p.stulp = false; amZeile(+i); },
+  amFeldMinus(i) { const p = ui.am.positionen[+i]; if (p.felder.length > 1) p.felder.pop(); if (p.felder.length !== 2) p.stulp = false; amZeile(+i); },
+  amStulp(i) { const p = ui.am.positionen[+i]; p.stulp = !p.stulp; amZeile(+i); },
+  amOL(i) { const p = ui.am.positionen[+i]; p.oberlicht = p.oberlicht ? null : { h: '', o: 'F' }; amZeile(+i, true); },
+  amPosPlus() { const am = ui.am; const vor = am.positionen[am.positionen.length - 1];
+    const neu = leerePosition(am.positionen.length + 1, am.kopf); if (vor) { neu.rollladen = vor.rollladen; neu.gurt = vor.gurt; }
+    am.positionen.push(neu); am.fokus = neu.nr; amAlles(); setTimeout(() => { const el = document.getElementById('am-pos-' + neu.nr); el?.scrollIntoView({ block: 'center' }); el?.querySelector('input')?.focus(); }, 30); },
+  amPosKopie(i) { const am = ui.am; const c = JSON.parse(JSON.stringify(am.positionen[+i])); c._q = {}; am.positionen.splice(+i + 1, 0, c); am.positionen.forEach((p, k) => { p.nr = k + 1; }); am.fokus = +i + 2; amAlles(); toast('Position kopiert'); },
+  amPosWeg(i) { const am = ui.am; if (am.positionen.length < 2) { toast('Mindestens eine Position bleibt.'); return; } am.positionen.splice(+i, 1); am.positionen.forEach((p, k) => { p.nr = k + 1; }); amAlles(); },
+  amAbbrechen() { const z = ui.am?.ziel; ui.am = null; ui.blatt = null; location.hash = z ? `#/vorgang/${z}` : '#/erfassen'; },
+  amSpeichern() {
+    const am = ui.am; const k = am.kopf;
+    const pos = am.positionen.map(({ _q, ...p }) => normalisiere(p));
+    const offen = pos.filter((p) => fehlend(p).length).length;
+    const aufm = { system: k.system, material: k.material, farbeInnen: k.farbeInnen, farbeAussen: k.farbeAussen, glas: k.glas, randverbund: k.randverbund, dichtung: k.dichtung, bau: k.bau, montage: k.montage, lieferung: k.lieferung };
+    let v;
+    if (am.ziel) { v = V(am.ziel); v.positionen = pos; v.aufmass = aufm; }
+    else { v = neuerVorgang(k.kunde || 'Neuer Kunde', k.vorhaben || 'Fenster und Türen', { adresse: k.adresse, tel: k.tel }); v.positionen = pos; v.aufmass = aufm; v.notiz = am.quelle === 'blatt' ? 'Aus dem Aufmaßblatt übernommen.' : 'Direkt im Aufmaß erfasst.'; }
+    ui.am = null; ui.blatt = null; speichern();
+    location.hash = `#/vorgang/${v.id}/zeichnungen`;
+    toast(`${ico('haken')} <b>${am.ziel ? 'Aufmaß gespeichert' : 'Vorgang angelegt'}</b><br>${pos.length} Positionen, Zeichnungen erstellt${offen ? ` · ${offen} noch unvollständig` : ''}`, 'gross');
+  },
+  blattBeispiel() { ui.blatt = { quelle: 'beispiel' }; ui.am = null; render(); },
+  blattNeu() { ui.blatt = null; ui.am = null; render(); },
+  async blattAuslesen() {
+    ui.blatt.scan = true; render();
+    const st = (t) => { const el = $('#scan-status'); if (el) el.innerHTML = `<p class="denkt">${t}<span>.</span><span>.</span><span>.</span></p>`; };
+    st('Kopf wird gelesen'); await warte(700); st('6 Positionen erkannt, Maße werden gelesen'); await warte(800); st('Skizzen und Kurzschreibweise werden gedeutet'); await warte(800);
+    const r = blattAuslesen(); ui.blatt.scan = false;
+    ui.am = { ziel: null, quelle: 'blatt', kopf: r.kopf, positionen: r.positionen, hinweise: r.hinweise };
+    render(); window.scrollTo(0, 0);
+    toast(`${ico('haken')} <b>6 Positionen gelesen</b><br>3 Stellen bitte prüfen (gelb/rot markiert)`, 'gross');
+  },
+  nkUebernehmen() { d.preise['Hebe-Schiebe-Tür'] = 650; speichern(); render(); toast(`${ico('haken')} Montagepauschale Hebe-Schiebe-Tür auf 650 € gesetzt – gilt ab dem nächsten Angebot`); },
+  marke(k) { d.gestaltung = k; speichern(); marke(); render(); },
+  gehe(h) { schliessen(); location.hash = h; },
+  vorfuehrung() {
+    const S = [
+      ['#/erfassen', 'Aufmaßblatt fotografieren', 'Beispielblatt verwenden → „Blatt auslesen“ → gelbe und rote Stellen prüfen → „Vorgang anlegen“.'],
+      ['#/vorgang/V-2026-041/zeichnungen', 'Zeichnungen und Fensterliste', 'Automatisch aus dem Aufmaß, mit Bemaßung, druckbar für den Händler.'],
+      ['#/vorgang/V-2026-045/positionen', 'Anfrage an Händler', 'Unvollständige Erfassung: Pflichtangaben fehlen → im Aufmaß ergänzen → „Anfrage an Händler“ mit Prüfung und Vorschau je Händler.'],
+      ['#/', 'Rückfrage und Nachfassen', 'Auf der Übersicht: Rückfrage beantworten, Händler nachfassen – Mails sind vorbereitet.'],
+      ['#/vorgang/V-2026-044/angebote', 'Händlerangebot abgleichen', 'Abweichung „2-fach statt 3-fach“ wird automatisch gefunden.'],
+      ['#/vorgang/V-2026-041/kundenangebot', 'Kundenangebot, transparent', 'Jede Position mit Element, Montage, Ausbau – fester Kopf und Schluss, Aufschlag-Regler.'],
+      ['#/nachkalkulation', 'Nachkalkulation (Ausblick)', 'Waren wir zu billig? Soll/Ist je Auftrag, Vorschlag für die Preisliste.'],
+      ['#/einstellungen', 'Eigene Farben', 'Gestaltung umschalten, z. B. Dunkelblau / Rot.'],
+    ];
+    modal('Vorführung · Vorschlag für den Ablauf', `<ol class="vf-liste">${S.map(([h, t, x], i) => `<li><button data-act="gehe" data-arg="${h}"><span class="vf-nr">${i + 1}</span><span><b>${t}</b><small>${x}</small></span></button></li>`).join('')}</ol>
+      <p class="leise klein">Alle Daten sind erfunden. „Demo zurücksetzen“ unter Einstellungen stellt den Anfang wieder her.</p>`);
+  },
+  mehr() {
+    modal('Mehr', `<div class="mehr-liste">
+      <button data-act="gehe" data-arg="#/haendler">${ico('haendler')} Großhändler</button>
+      <button data-act="gehe" data-arg="#/nachkalkulation">${ico('euro')} Nachkalkulation <span class="tag-ausblick">Ausblick</span></button>
+      <button data-act="gehe" data-arg="#/einstellungen">${ico('zahnrad')} Einstellungen</button>
+      <button data-act="vorfuehrung">${ico('pfeil')} Vorführung</button></div>`);
+  },
   mailSimulieren() {
     const a = d.anfragen.find((x) => x.status === 'gesendet');
     if (a) { antwortSimulieren(a.id); return; }
     toast('Alle Anfragen sind beantwortet – erst eine neue Anfrage senden.');
   },
 };
+
+function amZeile(i, offen) {
+  const p = normalisiere(ui.am.positionen[i]);
+  const el = document.querySelector(`[data-am-zeile="${i}"]`); if (!el) return render();
+  const war = el.querySelector('details')?.open;
+  el.outerHTML = zeileHtml(p, i, offen || war);
+  amSumme();
+}
+function amAlles() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+function amSumme() {
+  const am = ui.am; const el = $('#am-zusammen'); if (!el) return;
+  const offen = am.positionen.filter((p) => fehlend(p).length).length;
+  el.innerHTML = `${am.positionen.length} Positionen · ${am.positionen.reduce((s, p) => s + (+p.stk || 0), 0)} Elemente${offen ? ` · <b class="rot">${offen} unvollständig</b>` : ''}`;
+}
+const AM_ZAHL = ['stk', 'b', 'h', 'fertigB', 'fertigH'];
+const KOPF_ALLE = ['material', 'farbeInnen', 'farbeAussen', 'glas', 'randverbund', 'dichtung'];
+function amEingabe(el) {
+  const am = ui.am; if (!am) return;
+  const [ziel, feld] = el.dataset.am.split('|'); const wert = el.value;
+  if (ziel === 'k') {
+    am.kopf[feld] = wert;
+    if (KOPF_ALLE.includes(feld)) { am.positionen.forEach((p) => { p[feld] = wert; if (p._q) delete p._q[feld]; normalisiere(p); }); amAlles(); toast(`${ico('haken')} Für alle Positionen übernommen`); }
+    return;
+  }
+  const i = +ziel; const p = am.positionen[i];
+  if (feld.startsWith('feldb.')) p.felder[+feld.slice(6)].b = +wert || null;
+  else if (feld.startsWith('aufd.')) p.aufd[feld.slice(5)] = wert;
+  else if (feld === 'ol.h') p.oberlicht.h = +wert || '';
+  else if (feld === 'ol.o') { p.oberlicht.o = wert || 'F'; }
+  else p[feld] = AM_ZAHL.includes(feld) ? (wert === '' ? '' : +wert) : wert;
+  if (p._q) delete p._q[feld];
+  if (feld === 'art') {
+    if (wert === 'Hebe-Schiebe-Tür' && !p.felder.some((x) => x.o === 'S')) { p.felder = [{ o: 'F' }, { o: 'S', band: 'l' }]; p.stulp = false; }
+    if (['Haustür', 'Nebentür'].includes(wert) && !p.felder.some((x) => x.o === 'T')) { p.felder = [{ o: 'T', band: '' }]; p.tuer = 'innen'; }
+    if (['Fenster', 'Balkontür', 'Terrassentür'].includes(wert) && p.felder.some((x) => ['S', 'T'].includes(x.o))) p.felder = [{ o: 'DK', band: '' }];
+  }
+  normalisiere(p);
+  if (feld === 'art' || feld.startsWith('ol.') || feld === 'tuer') { amZeile(i); return; }
+  const z = el.closest('[data-am-zeile]');
+  z.querySelector('.am-skizze').innerHTML = zeichnung(p, { max: 92 });
+  z.querySelector('.am-status').innerHTML = `${statusHtml(p)} <span class="am-kurz">${esc(kurz(p))}</span>`;
+  el.classList.remove('unsicher');
+  el.classList.toggle('fehlt', fehlend(p).includes(feld));
+  amSumme();
+}
 
 function neuerVorgang(kunde, art, f) {
   d.zaehler = (d.zaehler || 46) + 1;
@@ -935,9 +1167,12 @@ function neuerVorgang(kunde, art, f) {
 
 // ——— Eingaben (live) ———
 document.addEventListener('input', (e) => {
+  const am = e.target.closest('[data-am]'); if (am) { if (am.tagName !== 'SELECT') amEingabe(am); return; }
   const el = e.target.closest('[data-input]'); if (!el) return;
   const k = el.dataset.input; const arg = el.dataset.arg;
   if (k === 'suche') { ui.suche = el.value; const pos = el.selectionStart; render(); const s = $('.suche'); s.focus(); s.setSelectionRange(pos, pos); return; }
+  if (k === 'baustein') { d.bausteine[arg] = el.value; speichern(); return; }
+  if (k === 'preis') { d.preise[arg] = +el.value || 0; speichern(); return; }
   const ka = arg && d.kundenangebote[arg];
   if (!ka) return;
   if (k === 'kaAufschlag') ka.aufschlag = +el.value;
@@ -948,6 +1183,12 @@ document.addEventListener('input', (e) => {
   speichern();
   const y = window.scrollY; render(); window.scrollTo(0, y);
   if (k === 'kaAufschlag') $('[data-input=kaAufschlag]')?.focus();
+});
+
+document.addEventListener('change', (e) => {
+  const am = e.target.closest('select[data-am]'); if (am) { amEingabe(am); return; }
+  const f = e.target.closest('[data-blatt-foto]');
+  if (f && f.files?.[0]) { const r = new FileReader(); r.onload = () => { ui.blatt = { quelle: 'foto', foto: r.result }; ui.am = null; render(); }; r.readAsDataURL(f.files[0]); }
 });
 
 document.addEventListener('click', (e) => {
@@ -971,19 +1212,23 @@ function render() {
   const inhalt = {
     '': () => seiteUebersicht(), vorgaenge: () => seiteVorgaenge(), vorgang: () => seiteVorgang(a, b),
     erfassen: () => seiteErfassen(a), postfach: () => seitePostfach(a), haendler: () => seiteHaendler(), einstellungen: () => seiteEinstellungen(),
+    aufmass: () => seiteAufmass(a, b), nachkalkulation: () => seiteNachkalk(d.preise, a),
   }[seite] || seiteUebersicht;
   $('#inhalt').innerHTML = inhalt();
-  const aktiv = seite === 'vorgang' ? 'vorgaenge' : seite;
+  const aktiv = seite === 'vorgang' || seite === 'aufmass' ? 'vorgaenge' : seite;
   document.querySelectorAll('[data-nav]').forEach((x) => x.classList.toggle('an', x.dataset.nav === aktiv));
   navZahlen();
 }
 
 let letzteSeite = '';
 window.addEventListener('hashchange', () => {
+  if (!$('#modal').hidden) schliessen();
   const s = location.hash.split('/').slice(0, 3).join('/');
-  if (!location.hash.startsWith('#/erfassen')) ui.erfassung = null;
+  if (!location.hash.startsWith('#/erfassen')) { ui.erfassung = null; if (ui.am && !ui.am.ziel) { ui.am = null; ui.blatt = null; } }
+  if (ui.am?.ziel && !location.hash.startsWith('#/aufmass/' + ui.am.ziel)) ui.am = null;
   render();
   if (s !== letzteSeite) window.scrollTo(0, 0);
   letzteSeite = s;
 });
+marke();
 render();

@@ -283,7 +283,7 @@ export function eur(n) {
 export function kundenText(p) {
   const teile = [`${p.material}-${p.art === 'Fenster' ? 'Fenster' : p.art}`];
   if (p.teilung && p.teilung !== '1-flügelig') teile.push(p.teilung);
-  if (p.oeffnung) teile.push(p.oeffnung);
+  if (p.oeffnung && !(p.teilung || '').includes('Stulp')) teile.push(p.oeffnung);
   teile.push(`${p.glas === '3-fach' ? 'Dreifach' : 'Zweifach'}-Wärmeschutzverglasung${p.glasOpt ? ' (' + p.glasOpt + ')' : ''}`);
   teile.push(`Farbe innen ${p.farbeInnen}, außen ${p.farbeAussen}`);
   if (p.rollladen && p.rollladen !== 'keiner') teile.push('mit Rollladen (' + p.rollladen + ')');

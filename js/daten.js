@@ -26,7 +26,7 @@ export const KATALOG = {
   farbe: ['Weiß', 'Cremeweiß RAL 9001', 'Anthrazitgrau RAL 7016', 'Kiefer', 'Eiche hell', 'Golden Oak', 'Nussbaum'],
   sprossen: ['keine', 'innenliegend', 'aufgesetzt (Wiener Sprosse)'],
   beschlag: ['Standard', 'RC2', 'verdeckt liegend', 'Mehrfachverriegelung'],
-  rollladen: ['keiner', 'Aufsatz, Gurt', 'Aufsatz, Motor', 'Vorbau, Funk', 'Raffstore'],
+  rollladen: ['keiner', 'Rollladen Aufsatz', 'Rollladen Vorbau', 'Aufsatz, Gurt', 'Aufsatz, Motor', 'Vorbau, Funk', 'Raffstore'],
   masstyp: ['Bestellmaß', 'Rohbaumaß'],
 };
 
