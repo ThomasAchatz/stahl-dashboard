@@ -138,6 +138,8 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 | Nr. | Anforderung | Prio | Stufe |
 |---|---|---|---|
 | F-20 | Pflegbarer Katalog für Elementarten (Fenster, Balkon-/Terrassentür, Hebe-Schiebe-Tür, Haustür, Nebentür …) mit ihren Merkmalen und erlaubten Werten | M | 1 |
+| F-20a | **Weitere Produktgruppen** des Betriebs als Elementarten mit eigenen Merkmalen: Rollläden, Raffstore/Jalousien, Markisen, Insektenschutz, Lamellendächer, Terrassendächer, Wintergärten, Glas (siehe `docs/gespraeche/2026-11-25_website.md`) | S | 2 |
+| F-20b | **Eigenfertigung** (eigene Schlosserei, Sonderkonstruktionen): Position wahlweise „beim Händler anfragen“ oder „selbst fertigen“ (Material + Stunden) | S | 2–3 |
 | F-21 | In Stufe 1 gilt ein **Vorschlagskatalog** (Anhang A). Er wird durch die Liste des Auftraggebers ersetzt, sobald sie vorliegt. | M | 1 → 4 |
 | F-22 | Pflichtmerkmale je Elementart. Ohne Pflichtmerkmale ist keine Anfrage möglich. | M | 1 |
 | F-23 | Abhängigkeiten, z. B. Anschlag nur bei öffnenden Flügeln, Rollladen-Antrieb nur mit Rollladen | S | 2 |
@@ -219,6 +221,7 @@ Priorität: **M** = Muss, **S** = Soll, **K** = Kann. Die Stufe bezieht sich auf
 |---|---|---|---|
 | F-100 | Anmeldung mit E-Mail und Passwort für 4 Nutzer. Neue Nutzer legt der Inhaber an. | M | 1 |
 | F-101 | Einstellungen: Firmendaten, Briefkopf, Signatur je Nutzer, Wiedervorlage-Fristen, Merkmalkatalog, Händler, Vorlagen | M | 1–3 |
+| F-103 | **Gestaltung je Betrieb:** Logo und Firmenfarben in App, Mails und Kundenangebot | S | 1 |
 | F-102 | Rollen (z. B. Außendienst ohne Einkaufspreise) | K | 4 |
 
 ### 6.12 Schnittstelle zu pinncalc
