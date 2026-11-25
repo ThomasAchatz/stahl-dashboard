@@ -1,6 +1,6 @@
 # Lastenheft – Angebots-Dashboard Fenster & Türen
 
-Stand: 25.11.2026 · Version 0.2 (nach Kundengespräch, siehe `docs/gespraeche/2026-11-25_kunde.md`) · Arbeitstitel: **Stahl Dashboard**
+Stand: 25.11.2026 · Version 0.3 (Produkt mit Pilotkunde, siehe `docs/gespraeche/2026-11-25_kunde.md` und `docs/analyse/pinncalc-abloesung.md`) · Arbeitstitel: **Stahl Dashboard**
 
 ---
 
@@ -51,8 +51,9 @@ Ziel ist ein faires, nachvollziehbares Angebot für den Endkunden.
 
 | Punkt | Festlegung |
 |---|---|
-| Art | Einzelanfertigung für einen Betrieb, kein Produkt für mehrere Kunden |
-| Nutzer | 4 Personen. In Stufe 1 haben alle die gleichen Rechte, und es ist sichtbar, wer was gemacht hat. |
+| Art | **Allgemeines Produkt für Fensterbauer** (Fachbetriebe, die beim Großhändler kaufen und montieren). Geplant mit diesem Betrieb als **Pilotkunde**. Betriebsabhängiges ist Einstellung, nicht Code. Mandantenfähig von Anfang an. |
+| Langfristiges Ziel | **Corpora (PinnCalc) schrittweise ablösen**, siehe Fahrplan in `docs/analyse/pinncalc-abloesung.md`. Kosten heute beim Pilotkunden: 6.200 €/Jahr. |
+| Nutzer | Pilotkunde: 4 Personen im Büro plus Monteure (Zeiterfassung, Phase 2). In Stufe 1 haben alle die gleichen Rechte, und es ist sichtbar, wer was gemacht hat. |
 | Eigenständigkeit | Eigenes Repository, eigene Datenbank, eigene Schlüssel, eigene Domain, eigenes Postfach. **Keine technische oder organisatorische Verbindung zu anderen Projekten.** |
 | Daten in der Entwicklung | Nur erfundene Daten (Endkunden, Händler, Preise) |
 | Sprache | Deutsch (Oberfläche, Texte, Dokumentation) |
@@ -287,6 +288,8 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | Z-10 | 1–2 heutige Fensterzeichnungen und Fensterlisten (anonymisiert): Was braucht der Lieferant genau? | Stufe 2 |
 | Z-11 | Muster-Kundenangebot mit festem Kopf und Schluss sowie gewünschter Aufschlüsselung je Position | Stufe 3 |
 | Z-12 | Vollständiger Satz „Die Schnittstelle soll sein …“ aus dem Gespräch | sofort |
+| Z-13 | Corpora-Paket, Exportmöglichkeiten, Venturi ja/nein (beim Kunden bzw. PinnCalc erfragen) | vor Phase 3 |
+| Z-14 | Wie die Nachkalkulation heute von Hand läuft (Beispiel mit erfundenen Zahlen: welche Zahlen, welche Tabelle) | vor Phase 2 |
 
 ## 12. Risiken
 
@@ -313,6 +316,8 @@ Stufen 1–3 laufen ausschließlich mit erfundenen Daten. Echte Daten kommen ers
 | E-3 | KI schon im Pre-Dashboard (Stufe 1) | Ja: Diktat → Positionen ist der Kern und überzeugt beim Vorführen |
 | E-4 | Name der App gegenüber dem Auftraggeber | Arbeitstitel bis zur Abstimmung |
 | E-5 | Wo entsteht das Kundenangebot: in pinncalc (das Tool liefert Positionen und Preise zu) oder im Tool (mit Übergabe an pinncalc für Auftrag und Buchhaltung)? | Abhängig von Z-9. Wenn pinncalc gut importieren kann, das Angebot in pinncalc lassen (eine Wahrheit für Kalkulation und Nachkalkulation) |
+| E-6 | Rechte an der Software und Pilotvertrag | Rechte bleiben bei Tommy, Pilotkunde erhält Lizenz zum Pilotpreis; Stufen mit Abnahme, Haftungsgrenze, AVV (Details in der Analyse, Abschnitt 6) |
+| E-7 | Phase 2: Zeiterfassung + automatische Nachkalkulation vorziehen? | Ja, direkt nach dem Fenster-Modul: Nachkalkulation läuft heute von Hand, großer Nutzen, läuft neben Corpora |
 
 ---
 

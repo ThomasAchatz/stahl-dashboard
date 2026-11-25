@@ -72,3 +72,38 @@ Vertrag (Gewährleistung, Wartung, Haftungsgrenze) und eine Abnahme durch den St
 5. Wie viele Monteure buchen Zeiten? Arbeitszeit und Projektzeit getrennt? Geht das an den Lohn (DATEV Lohn, Steuerberater)?
 6. Soll das Ziel ein Produkt für weitere Fensterbauer sein oder bleibt es bei einem Betrieb?
 7. Kann Corpora Daten exportieren (Kunden, Artikel, Belege)? Gibt es eine Schnittstelle oder nur Export als Datei?
+
+## 6. Nach den Antworten vom 25.11.2026: Produkt mit Pilotkunde
+
+**Ausgangslage:** Corpora kostet den Kunden **6.200 €/Jahr** (≈ 517 €/Monat), passt nicht auf Fensterbauer, die Nachkalkulation läuft von Hand.
+Ziel ist ein **allgemeines Produkt für Fensterbauer**, geplant mit diesem Betrieb als **Pilotkunde**.
+
+**Zielgruppe schärfen:** Der Kunde produziert nicht selbst, er **kauft beim Großhändler und montiert**. Für Hersteller gibt es
+Spezialsoftware (z. B. Klaes, Orgadata, Venturi). Für **Fachbetriebe, die zukaufen und montieren**, scheint die Auswahl kleiner zu sein
+(ein Treffer in der Suche: msFaktura „Bauelemente Fachhandels-Software“). Das ist eine Nische, die zu prüfen ist (Wettbewerber, Zahl der Betriebe).
+
+**Was „allgemein, aber individuell geplant“ technisch heißt:**
+- Alles, was betriebsabhängig ist, wird **Einstellung statt Code**: Merkmalkatalog, Händler und ihr Wording, Angebotsbausteine
+  (Kopf/Schluss), Preislisten (Montage, Zubehör), Verrechnungssätze, Fristen.
+- **Mandantenfähig von Anfang an** (jede Tabelle gehört einem Betrieb), auch wenn zuerst nur einer da ist. Später nachrüsten ist teuer.
+- Eigene, getrennte Infrastruktur (eigenes Supabase-Projekt, eigene Domain, eigene Schlüssel).
+
+**Fahrplan (Vorschlag):**
+
+| Phase | Inhalt | Dauer (grob) | Corpora |
+|---|---|---|---|
+| 1 | Fenster-Modul: Erfassen, Zeichnung mit Bemaßung, Anfrage an Händler, Angebot auslesen, transparentes Kundenangebot, Export an Corpora | 2–3 Monate | läuft weiter |
+| 2 | Zeiterfassung am Handy + **automatische Vor-/Nachkalkulation** je Auftrag (der größte Schmerz neben den Fenstern) | 2–4 Monate | läuft weiter |
+| 3 | Belege bis Rechnung, E-Rechnung, GoBD, DATEV-Export (mit Steuerberater), Datenübernahme | 5–7 Monate | wird abgelöst |
+| 4 | Produkt: Registrierung, Abrechnung, Onboarding, Support, Verträge | 2–3 Monate | – |
+
+**Rechnung (Beispiel, keine Marktpreise):**
+Bei 6.200 €/Jahr Corpora wäre ein Preis von z. B. 250–400 €/Monat je Betrieb für den Kunden günstiger und für ihn passend.
+20 Betriebe × 300 € × 12 = 72.000 €/Jahr. Dem stehen 1–1,5 Jahre Entwicklung und laufend Support/Infrastruktur gegenüber.
+
+**Vertrag mit dem Pilotkunden (wichtig, vor dem Start):**
+- **Alle Rechte an der Software bleiben bei Tommy.** Der Kunde bekommt eine Nutzungslizenz. Sonst kann er bei einer bezahlten
+  Einzelanfertigung Ansprüche auf den Code erheben, und der Verkauf an andere wird schwierig.
+- Pilotpreis bzw. Rabatt im Gegenzug für Mitarbeit (Muster, Tests, Feedback) und ggf. Referenz.
+- Klare Stufen mit Abnahme, Haftungsgrenze, Wartung/Support, AVV (Auftragsverarbeitung, Kundendaten seiner Endkunden).
+- Kein Kündigen von Corpora, bevor Phase 3 abgenommen ist und der Steuerberater zugestimmt hat.
